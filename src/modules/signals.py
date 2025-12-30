@@ -52,3 +52,41 @@ def add_technical_indicators(df: pd.DataFrame, sma_window: int = 50, mom_window:
     df['Trend_Strength_Pct'] = (df['Close'] - df[f'SMA_{sma_window}']) / df[f'SMA_{sma_window}']
     
     return df
+
+def detect_volatility_regime(df: pd.DataFrame, vol_col: str = 'Vol_21d', quantile_high: float = 0.75, quantile_low: float = 0.25) -> pd.DataFrame:
+    """
+    Classifies periods into Volatility Regimes (Low, Normal, High).
+    
+    Args:
+        df (pd.DataFrame): Dataframe containing the volatility column.
+        vol_col (str): Name of the volatility column.
+        quantile_high (float): Percentile threshold for High Volatility (e.g., 0.75).
+        quantile_low (float): Percentile threshold for Low Volatility (e.g., 0.25).
+        
+    Returns:
+        pd.DataFrame: DF with 'Vol_Regime' column.
+                     'High' if vol > quantile_high
+                     'Low' if vol < quantile_low
+                     'Normal' otherwise.
+    """
+    if df.empty or vol_col not in df.columns:
+        return df
+    
+    df = df.copy()
+    
+    # Calculate thresholds based on the entire history (Hindsight bias: YES, but standard for regime analysis)
+    # Ideally, one would use a rolling window for true out-of-sample, but for this research question,
+    # we want to categorize the historical distribution.
+    
+    thresh_high = df[vol_col].quantile(quantile_high)
+    thresh_low = df[vol_col].quantile(quantile_low)
+    
+    conditions = [
+        (df[vol_col] > thresh_high),
+        (df[vol_col] < thresh_low)
+    ]
+    choices = ['High', 'Low']
+    
+    df['Vol_Regime'] = np.select(conditions, choices, default='Normal')
+    
+    return df

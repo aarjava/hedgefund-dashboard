@@ -119,3 +119,53 @@ def run_backtest(df: pd.DataFrame,
     bt_df['DD_Strategy'] = (bt_df['Equity_Strategy'] / bt_df['Equity_Strategy'].cummax()) - 1
     
     return bt_df
+
+def calculate_conditional_stats(df: pd.DataFrame, strategy_col: str, regime_col: str) -> pd.DataFrame:
+    """
+    Calculates performance stats conditioned on a regime column.
+    
+    Args:
+        df (pd.DataFrame): Dataframe with strategy returns and regime column.
+        strategy_col (str): Column name of strategy returns (e.g. 'Strategy_Net_Return').
+        regime_col (str): Column name of regime (e.g. 'Vol_Regime').
+        
+    Returns:
+        pd.DataFrame: Table with metrics per regime.
+    """
+    if df.empty or regime_col not in df.columns:
+        return pd.DataFrame()
+    
+    regimes = df[regime_col].unique()
+    results = []
+    
+    for reg in regimes:
+        # Filter data for this regime
+        subset = df[df[regime_col] == reg][strategy_col]
+        
+        if subset.empty:
+            continue
+            
+        # We need equity curve for this subset to calc CAGR/Sharpe properly?
+        # That's tricky because the subset is not contiguous time series usually.
+        # Standard approach:
+        # 1. Average Daily Return -> Annualize
+        # 2. Daily Vol -> Annualize
+        # 3. Sharpe = Ann_Ret / Ann_Vol
+        
+        avg_ret = subset.mean() * 252
+        vol = subset.std() * (252**0.5)
+        sharpe = avg_ret / vol if vol != 0 else 0
+        
+        # Win Rate
+        win_rate = (subset > 0).mean()
+        
+        results.append({
+            "Regime": reg,
+            "Ann_Return": avg_ret,
+            "Volatility": vol,
+            "Sharpe": sharpe,
+            "WinRate": win_rate,
+            "Count": len(subset)
+        })
+        
+    return pd.DataFrame(results).set_index("Regime")

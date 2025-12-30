@@ -2,14 +2,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
 from datetime import datetime, timedelta
 
 # Import custom modules
-# Check if running from root or src, adjust path if needed or assume simple import if in python path
 try:
     from modules import data_model, signals, backtester
 except ImportError:
-    # Fallback if running from src directory directly
     import sys
     import os
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -17,7 +16,7 @@ except ImportError:
 
 # --- Configuration ---
 st.set_page_config(
-    page_title="HedgeFund Analyst Dashboard",
+    page_title="Quantitative Research Dashboard",
     page_icon="♟️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -36,12 +35,14 @@ st.markdown("""
     .bullish { color: #00ff00; font-weight: bold; }
     .bearish { color: #ff4b4b; font-weight: bold; }
     .neutral { color: #888888; font-weight: bold; }
+    .regime-high { color: #ff4b4b; font-weight: bold; }
+    .regime-low { color: #00ff00; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
 # --- Sidebar Inputs ---
 with st.sidebar:
-    st.title("🎛️ Strategy Config")
+    st.title("🎛️ Research Config")
     
     st.subheader("1. Asset Selection")
     t_mode = st.radio("Selection Mode", ["Preset Universe", "Custom Ticker"], horizontal=True)
@@ -59,7 +60,7 @@ with st.sidebar:
         d_col1, d_col2 = st.columns(2)
         start_date = d_col1.date_input("Start", value=datetime.today() - timedelta(days=365*2))
         end_date = d_col2.date_input("End", value=datetime.today())
-        period_arg = "max" # We fetch max then slice for custom
+        period_arg = "max"
     else:
         period_map = {"Last 5 Years": "5y", "Last 10 Years": "10y", "Max": "max"}
         period_arg = period_map[date_mode]
@@ -68,8 +69,13 @@ with st.sidebar:
     sma_window = st.slider("Trend SMA Window", 10, 200, 50, 10, help="Lookback days for Simple Moving Average trend signal.")
     mom_window = st.slider("Momentum Lookback (Months)", 1, 24, 12, 1, help="Lookback months for Momentum signal.")
     
-    st.subheader("4. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1, help="Basis points per trade (e.g., 10 bps = 0.10%)") / 10000
+    st.markdown("---")
+    st.subheader("4. Research Rigor")
+    st.info("Regime Classification: Active")
+    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05)
+    
+    st.subheader("5. Backtest Settings")
+    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1) / 10000
     allow_short = st.checkbox("Allow Short Selling?", value=False)
 
 
@@ -95,168 +101,145 @@ if len(df) < 50:
 # --- Signal Calculation ---
 df = signals.add_technical_indicators(df, sma_window=sma_window, mom_window=mom_window)
 
+# --- Regime Detection ---
+# Using 21-day annualized vol
+df = signals.detect_volatility_regime(df, vol_col='Vol_21d', quantile_high=vol_q_high, quantile_low=0.25)
+
 # --- Dashboard Header ---
-st.title(f"{ticker} Quantitative Analysis")
+st.markdown("## 🔍 Research Question")
+st.markdown("> **How sensitive is trend-following performance to volatility regimes in US equities?**")
+
 latest = df.iloc[-1]
 prev = df.iloc[-2]
-chg = (latest['Close'] - prev['Close'])
 chg_pct = latest['Daily_Return']
 
 h1, h2, h3, h4 = st.columns(4)
-h1.metric("Price", f"${latest['Close']:.2f}", f"{chg_pct:.2%}")
-h2.metric("Trend (SMA)", f"${latest[f'SMA_{sma_window}']:.2f}", delta_color="off")
-h3.metric("Momentum", f"{latest[f'Momentum_{mom_window}M_1M']:.2%}")
-h4.metric("Volatility (21d)", f"{latest['Vol_21d']:.2%}")
+h1.metric("Asset", f"{ticker} (${latest['Close']:.2f})", f"{chg_pct:.2%}")
+h2.metric("Current Regime", latest['Vol_Regime'])
+h3.metric(f"Volatility ({vol_q_high:.0%}-tile)", f"{latest['Vol_21d']:.2%}")
+h4.metric("Trend Status", "BULLISH" if latest['Close'] > latest[f'SMA_{sma_window}'] else "BEARISH")
 
 # --- Tabs ---
-tab_ov, tab_sig, tab_bt, tab_rep = st.tabs(["📈 Overview", "🚦 Signal Logic", "🧪 Backtest Engine", "📄 Report"])
+tab_ov, tab_regime, tab_bt, tab_rep = st.tabs(["📈 Overview", "🌪️ Regime Analysis", "🧪 Backtest Engine", "📄 Report"])
 
 # --- TAB 1: OVERVIEW ---
 with tab_ov:
     # Interactive Price Chart
     fig = go.Figure()
-    
-    # Candlestick or Line? Let's do Line for cleanliness over long periods, user can zoom.
-    fig.add_trace(go.Scatter(x=df.index, y=df['Close'], name='Close Price', line=dict(color='white', width=1.5)))
+    fig.add_trace(go.Scatter(x=df.index, y=df['Close'], name='Close Price', line=dict(color='white', width=1)))
     fig.add_trace(go.Scatter(x=df.index, y=df[f'SMA_{sma_window}'], name=f'{sma_window}-Day SMA', line=dict(color='#ff9f43', width=1)))
-    fig.add_trace(go.Scatter(x=df.index, y=df['SMA_200'], name='200-Day SMA', line=dict(color='#2e86de', width=1)))
+    
+    # Highlight High Volatility Regimes
+    # Filter high vol periods
+    high_vol_mask = df['Vol_Regime'] == 'High'
+    # We can plot markers or shade areas. Shading is valid but tricky in Plotly without shapes list.
+    # Let's plot points
+    high_vol_pts = df[high_vol_mask]
+    fig.add_trace(go.Scatter(x=high_vol_pts.index, y=high_vol_pts['Close'], mode='markers', name='High Volatility', marker=dict(color='red', size=2)))
     
     fig.update_layout(
-        title=f"{ticker} Price Action & Key Levels",
+        title=f"{ticker} Price History & Regime Context",
         yaxis_title="Price ($)",
         template="plotly_dark",
-        height=600,
-        hovermode="x unified",
-        legend=dict(orientation="h", y=1.02, x=0)
+        height=500,
+        hovermode="x unified"
     )
     st.plotly_chart(fig, use_container_width=True)
-    
-    # Volume Chart (sub-chart)
-    # Keeping it simple for now, just description
-    st.info("The chart above overlays the selected Trend SMA (Orange) and the Long-Team 200 SMA (Blue).")
+    st.caption("Red dots indicate days classified as 'High Volatility' regime.")
 
-# --- TAB 2: SIGNALS ---
-with tab_sig:
-    col1, col2, col3 = st.columns(3)
+# --- TAB 2: REGIME ANALYSIS ---
+with tab_regime:
+    st.subheader("Volatility Regime Classification")
     
-    # 1. Trend Signal
-    trend_state = "BULLISH" if latest['Close'] > latest[f'SMA_{sma_window}'] else "BEARISH"
-    trend_color = "green" if trend_state == "BULLISH" else "red"
+    c1, c2 = st.columns(2)
+    with c1:
+        # Scatter: Vol vs Returns needed? Maybe just distribution
+        fig_hist = px.histogram(df, x="Vol_21d", color="Vol_Regime", nbins=50, title="Volatility Distribution", template="plotly_dark",
+                                color_discrete_map={"High": "#ff4b4b", "Low": "#00ff00", "Normal": "#888888"})
+        st.plotly_chart(fig_hist, use_container_width=True)
+        
+    with c2:
+        # Pie chart of time spent in regimes
+        regime_counts = df['Vol_Regime'].value_counts()
+        fig_pie = px.pie(values=regime_counts, names=regime_counts.index, title="Time Spent in Regimes", template="plotly_dark",
+                         color=regime_counts.index, color_discrete_map={"High": "#ff4b4b", "Low": "#00ff00", "Normal": "#888888"})
+        st.plotly_chart(fig_pie, use_container_width=True)
     
-    with col1:
-        st.markdown("### Trend Following")
-        st.markdown(f"Status: <span style='color:{trend_color}; font-size:24px'>{trend_state}</span>", unsafe_allow_html=True)
-        st.write(f"Current Price > {sma_window}-Day SMA")
-        st.progress(max(0.0, min(1.0, (latest['Close'] / latest[f'SMA_{sma_window}']) - 0.5))) # Just a visual thing
-        st.caption("Strategy goes LONG, when Price is above SMA. Moves to Cash below.")
-
-    # 2. Momentum Signal
-    mom_val = latest[f'Momentum_{mom_window}M_1M']
-    mom_state = "POSITIVE" if mom_val > 0 else "NEGATIVE"
-    mom_color = "green" if mom_val > 0 else "red"
-    
-    with col2:
-        st.markdown(f"### Momentum ({mom_window}-1)")
-        st.markdown(f"Status: <span style='color:{mom_color}; font-size:24px'>{mom_state}</span> ({mom_val:.1%})", unsafe_allow_html=True)
-        st.write("Past performance (excl. last month)")
-        st.caption("Academic momentum factor (Jegadeesh & Titman). Positive momentum implies further upside statistically.")
-
-    # 3. RSI Signal (Mean Reversion)
-    rsi_val = latest['RSI_14']
-    rsi_state = "NEUTRAL"
-    if rsi_val > 70: rsi_state = "OVERBOUGHT"
-    elif rsi_val < 30: rsi_state = "OVERSOLD"
-    
-    with col3:
-        st.markdown("### Mean Reversion (RSI)")
-        st.markdown(f"Status: <strong style='font-size:24px'>{rsi_state}</strong> ({rsi_val:.1f})", unsafe_allow_html=True)
-        st.slider("RSI Level", 0, 100, int(rsi_val), disabled=True)
-        st.caption("Extremes (>70 or <30) may indicate potential reversals.")
-
-    st.markdown("---")
-    st.subheader("Signal Correlation")
-    # Show correlation between price changes and signal changes?
-    # Maybe just a simple correlation matrix of indicators
-    corr_cols = ['Daily_Return', f'Momentum_{mom_window}M_1M', 'RSI_14', 'Vol_21d']
-    st.write(df[corr_cols].corr())
+    st.markdown("### Regime Characteristics")
+    stats = df.groupby('Vol_Regime')[['Daily_Return', 'Vol_21d']].mean()
+    # Annualize return
+    stats['Ann_Return'] = stats['Daily_Return'] * 252
+    st.dataframe(stats.style.format("{:.2%}"))
 
 # --- TAB 3: BACKTEST ---
 with tab_bt:
     st.subheader("Strategy Simulation")
     
-    bt_method = st.radio("Select Strategy to Test", ["Trend Following (SMA)", "Momentum Only", "Trend + Momentum"], horizontal=True)
+    # Define Strategy
+    # Trend Following
+    df['Signal_Trend'] = np.where(df['Close'] > df[f'SMA_{sma_window}'], 1, -1 if allow_short else 0)
     
-    # 1. Define Signal Column
-    if bt_method == "Trend Following (SMA)":
-        # 1 if Price > SMA, else 0 (or -1 if short)
-        df['Signal_Test'] = np.where(df['Close'] > df[f'SMA_{sma_window}'], 1, -1 if allow_short else 0)
-    elif bt_method == "Momentum Only":
-        df['Signal_Test'] = np.where(df[f'Momentum_{mom_window}M_1M'] > 0, 1, -1 if allow_short else 0)
-    else:
-        # Combined: Must be Bullish Trend AND Positive Momentum
-        c1 = df['Close'] > df[f'SMA_{sma_window}']
-        c2 = df[f'Momentum_{mom_window}M_1M'] > 0
-        df['Signal_Test'] = np.where(c1 & c2, 1, 0) # Conservative: Cash if any fails
-        
     # Run Backtest
-    # Default monthly for stability, but let's offer Daily strictly for Trend?
-    # User asked for monthly re-balancing in original spec, but user *inputs* allow flexibility.
-    # Let's stick to Monthly for robustness as Daily SMA crossing creates huge drag.
-    
-    res_df = backtester.run_backtest(df, 'Signal_Test', cost_bps=bt_cost, rebalance_freq='M')
+    res_df = backtester.run_backtest(df, 'Signal_Trend', cost_bps=bt_cost, rebalance_freq='M')
     
     if not res_df.empty:
-        # Metrics
+        # Add Regime to Backtest Results (forward fill valid for analysis)
+        res_df['Vol_Regime'] = df['Vol_Regime']
+        
+        # 1. Global Metrics
         strat_metrics = backtester.calculate_perf_metrics(res_df['Equity_Strategy'])
         bench_metrics = backtester.calculate_perf_metrics(res_df['Equity_Benchmark'])
         
-        # Display Metrics
         col_m1, col_m2, col_m3 = st.columns(3)
-        col_m1.metric("Strategy CAGR", f"{strat_metrics['CAGR']:.2%}", delta=f"{strat_metrics['CAGR']-bench_metrics['CAGR']:.2%} vs Bench")
-        col_m2.metric("Sharpe Ratio", f"{strat_metrics['Sharpe']:.2f}")
+        col_m1.metric("Global CAGR", f"{strat_metrics['CAGR']:.2%}")
+        col_m2.metric("Global Sharpe", f"{strat_metrics['Sharpe']:.2f}")
         col_m3.metric("Max Drawdown", f"{strat_metrics['MaxDD']:.2%}")
         
-        # Detailed Table
-        with st.expander("Full Performance Stats"):
-            stats_df = pd.DataFrame([strat_metrics, bench_metrics], index=["Strategy", "Benchmark"])
-            st.dataframe(stats_df.style.format("{:.2f}"))
-            
-        # Charts
+        # 2. Equity Curve
         fig_eq = go.Figure()
-        fig_eq.add_trace(go.Scatter(x=res_df.index, y=res_df['Equity_Strategy'], name='Strategy', line=dict(color='#00ff00')))
+        fig_eq.add_trace(go.Scatter(x=res_df.index, y=res_df['Equity_Strategy'], name='Trend Strategy', line=dict(color='#00ff00')))
         fig_eq.add_trace(go.Scatter(x=res_df.index, y=res_df['Equity_Benchmark'], name='Buy & Hold', line=dict(color='gray', dash='dot')))
-        fig_eq.update_layout(title="Equity Curve", template="plotly_dark", height=500, yaxis_title="Growth of $1")
+        fig_eq.update_layout(title="Equity Curve", template="plotly_dark", height=400)
         st.plotly_chart(fig_eq, use_container_width=True)
         
-        # Drawdown
-        fig_dd = go.Figure()
-        fig_dd.add_trace(go.Scatter(x=res_df.index, y=res_df['DD_Strategy'], name='Strategy DD', fill='tozeroy', line=dict(color='red')))
-        fig_dd.update_layout(title="Drawdown Profile", template="plotly_dark", height=300, yaxis_title="% Drawdown")
-        st.plotly_chart(fig_dd, use_container_width=True)
+        # 3. Conditional Analysis
+        st.markdown("### 🔬 Conditional Performance by Regime")
+        st.info("Does the strategy outperform during High Volatility?")
         
-    else:
-        st.warning("Backtest calculation failed.")
+        cond_stats = backtester.calculate_conditional_stats(res_df, 'Strategy_Net_Return', 'Vol_Regime')
+        
+        # Add Benchmark Conditional Stats for comparison
+        bench_cond = backtester.calculate_conditional_stats(res_df, 'Daily_Return', 'Vol_Regime')
+        
+        # Merge
+        comparison = pd.concat([cond_stats.add_suffix('_Strat'), bench_cond.add_suffix('_Bench')], axis=1)
+        
+        # Reorder columns
+        comparison = comparison[['Ann_Return_Strat', 'Ann_Return_Bench', 'Sharpe_Strat', 'Sharpe_Bench', 'WinRate_Strat']]
+        
+        st.dataframe(comparison.style.background_gradient(cmap='RdYlGn', subset=['Ann_Return_Strat', 'Sharpe_Strat']).format("{:.2f}"))
+        
+        st.markdown("**Key Insight:** Compare 'Sharpe_Strat' vs 'Sharpe_Bench' in the **High** volatility row.")
 
 # --- TAB 4: REPORT ---
 with tab_rep:
-    st.subheader("Export Analysis")
-    st.write("Download the processed data and backtest results for further analysis.")
+    st.subheader("Research Note Generation")
+    
+    st.markdown("### Findings Summary")
+    st.write(f"**Asset**: {ticker}")
+    st.write(f"**Trend Model**: {sma_window}-Day SMA")
     
     if not res_df.empty:
-        csv_data = res_df.to_csv().encode('utf-8')
+        # Create text summary
+        high_vol_perf = cond_stats.loc['High', 'Sharpe'] if 'High' in cond_stats.index else 0
+        normal_vol_perf = cond_stats.loc['Normal', 'Sharpe'] if 'Normal' in cond_stats.index else 0
+        
+        st.success(f"Strategy Sharpe in High Vol: **{high_vol_perf:.2f}**")
+        st.info(f"Strategy Sharpe in Normal Vol: **{normal_vol_perf:.2f}**")
+        
         st.download_button(
-            label="Download Data as CSV",
-            data=csv_data,
-            file_name=f"{ticker}_analysis_report.csv",
+            label="Download Full Research Data (CSV)",
+            data=res_df.to_csv().encode('utf-8'),
+            file_name=f"{ticker}_research_data.csv",
             mime="text/csv"
         )
-        
-        st.markdown("### Summary Note")
-        st.write(f"""
-        **Analysis for {ticker}:**
-        - **Period**: {df.index[0].date()} to {df.index[-1].date()}
-        - **Model**: {bt_method}
-        - **Performance**: The strategy achieved a CAGR of **{strat_metrics['CAGR']:.2%}** with a Sharpe Ratio of **{strat_metrics['Sharpe']:.2f}**.
-        
-        *Disclaimer: Past performance is not indicative of future results.*
-        """)

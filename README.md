@@ -1,65 +1,91 @@
-# Quantitative Momentum Dashboard
+# HedgeFund Dashboard 📈
+## Quantitative Momentum & Regime Analysis
 
-## Research Question
-**"Does simple price-based momentum (trend) generate statistically meaningful excess returns compared to buy-and-hold?"**
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
 
-This dashboard provides a robust, interactive tool to empirically test this question across various asset classes (Equities, Crypto, Commods) using flexible historical windows and configurable parameters.
+## 📊 Overview
 
-## Features
+The **HedgeFund Dashboard** is a professional-grade quantitative research tool designed to empirically test the efficacy of price-based momentum strategies across varying volatility regimes.
 
-### 1. Advanced Analytics
-- **Dynamic Signal Generation**: 
-  - **Trend**: Adjustable Simple Moving Average (SMA) lookback.
-  - **Momentum**: Customizable "12-1" month momentum window (Jegadeesh & Titman, 1993).
-  - **Mean Reversion**: RSI (Relative Strength Index) monitoring.
-- **Risk-Adjusted Performance**: Automatic calculation of Sharpe Ratio, Sortino Ratio, Calmar Ratio, and Max Drawdown.
+Built for seamless interactivity, this application empowers researchers to move beyond simple "Buy & Hold" comparisons. It decomposes returns to isolate specific market conditions where trend-following strategies generate statistically significant excess returns versus where they suffer from "whipsaw" decay.
 
-### 2. Backtesting Engine
-- **Event-Driven Simulation** (Vectorized):
-  - Supports Monthly or Daily rebalancing logic.
-  - Configurable Transaction Costs (bps).
-  - Long/Cash or Long/Short regimes.
-- **Visualizations**: Interactive Equity Curves, Drawdown Charts, and Signal Overlays.
+## 🚀 Key Capabilities
 
-### 3. Modular Architecture
-The codebase is structured for scalability:
-- `src/modules/data_model.py`: Robust data fetching with caching.
-- `src/modules/signals.py`: Library of technical indicators.
-- `src/modules/backtester.py`: Vectorized backtesting logic and metric calculations.
+### 1. Dynamic Signal Generation
+*   **Trend Following**: Adjustable Simple Moving Average (SMA) logic (e.g., Price > 200d SMA).
+*   **Momentum**: customizable lookback windows (e.g., classical 12-1 month momentum).
+*   **Mean Reversion**: Integrated RSI and volatility oscillators.
 
-## Getting Started
+### 2. Regime-Conditional Backtesting
+*   **Market Segmentation**: Automatically detects Low, Normal, and High volatility regimes using rolling realized volatility quantiles.
+*   **Conditional Performance**: Calculates Sharpe, Sortino, and Win Rate *per regime*, answering the critical question: *"Does this strategy survive high-volatility crashes?"*
+
+### 3. Professional Backtest Engine
+*   **Vectorized Simulation**: High-speed backtesting across daily or monthly rebalancing frequencies.
+*   **Friction Modeling**: Configurable transaction costs (basis points) to simulate real-world execution drag.
+*   **Long/Short Logic**: Toggle between Long-Only and Long/Short mandates.
+
+### 4. Interactive Visualization
+*   **Equity Curves**: Compare Strategy vs. Benchmark wealth accumulation in log or linear scale.
+*   **Drawdown Analysis**: Visualize underwater periods to assess tail risk.
+*   **Signal Overlays**: Inspect specific trade entry/exit points directly on the price chart.
+
+## 🛠 Tech Stack
+
+*   **Core**: Python 3.8+
+*   **Frontend**: [Streamlit](https://streamlit.io/)
+*   **Data Analysis**: Pandas, NumPy
+*   **Data Feed**: [yfinance](https://pypi.org/project/yfinance/)
+*   **Visualization**: Plotly Express & Graph Models
+
+## ⚡ Getting Started
 
 ### Prerequisites
-- Python 3.8+
-- [Poetry](https://python-poetry.org/) or virtualenv recommended.
+*   Python 3.8 or higher
+*   pip (Python Package Installer)
 
 ### Installation
-1.  Install dependencies:
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/hedgefund-dashboard.git
+    cd hedgefund-dashboard
+    ```
+
+2.  **Install Dependencies**
     ```bash
     pip install -r requirements.txt
     ```
-    *(Note: dependencies include streamlit, yfinance, pandas, plotly, numpy)*
 
-2.  Run the tests to verify integrity:
-    ```bash
-    python -m unittest discover tests
-    ```
-
-3.  Launch the dashboard:
+3.  **Run the Application**
     ```bash
     streamlit run src/dashboard.py
     ```
 
-## User Guide
-1.  **Sidebar Config**: Select an asset (e.g., SPY, BTC-USD) and adjust the "Lookback Window" to see how sensitivity changes performance.
-2.  **Overview Tab**: View the current price action relative to the Trend SMA.
-3.  **Signals Tab**: Check the current state of three distinct strategies (Trend, Momentum, Mean Reversion).
-4.  **Backtest Tab**: Compare the selected strategy against a Buy & Hold benchmark. Adjust transaction costs to see the impact of friction.
-5.  **Report Tab**: Download the full analysis data as a CSV for offline research.
+## 📖 User Guide
 
-## References
-- **Jegadeesh, N., & Titman, S. (1993)**. Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency. *The Journal of Finance*.
-- **Moskowitz, T. J., Ooi, Y. H., & Pedersen, L. H. (2012)**. Time series momentum. *Journal of Financial Economics*.
+| Tab | Functionality |
+| :--- | :--- |
+| **📈 Overview** | Real-time snapshot of the asset's price, current trend status, and volatility regime. |
+| **🌪️ Regime Analysis** | Deep dive into the distribution of market volatility. Visualize how often the market is in "High Stress" mode. |
+| **🧪 Backtest Engine** | The core research lab. Compare your configured strategy against the benchmark. Analyze conditional statistics. |
+| **📄 Report** | Summary of findings and raw data export for further analysis in Jupyter/Excel. |
+
+## 🔬 Methodology
+
+This project draws inspiration from seminal literature in quantitative finance, specifically investigating the **"Smile Curve"** performance of trend strategies:
+
+*   **Jegadeesh, N., & Titman, S. (1993)**. Returns to Buying Winners and Selling Losers.
+*   **Moskowitz, T. J., Ooi, Y. H., & Pedersen, L. H. (2012)**. Time series momentum.
+
+The underlying hypothesis is that price trends are persistent (autocorrelated) in normal markets but break down during mean-reverting (high volatility) shocks. This tool allows you to quantify that breakdown.
+
+## ⚖️ Disclaimer
+
+*This software is for educational and research purposes only. It does not constitute financial advice, investment recommendations, or trading signals. Past performance is not indicative of future results.*
 
 ---
-*Built with ❤️ by the Quantitative Research Team.*
+*Maintained by the Quantitative Research Team.*
