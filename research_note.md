@@ -1,7 +1,7 @@
 # Research Note: Volatility Regimes and Trend Performance in US Equities
 
 **Date**: December 2025
-**Author**: Quantitative Research Team
+**Author**: Aarjava Metha
 
 ## 1. Research Question
 "How sensitive is trend-following performance to volatility regimes in US equities?"
