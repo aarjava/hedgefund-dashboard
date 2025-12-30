@@ -88,4 +88,4 @@ The underlying hypothesis is that price trends are persistent (autocorrelated) i
 *This software is for educational and research purposes only. It does not constitute financial advice, investment recommendations, or trading signals. Past performance is not indicative of future results.*
 
 ---
-*Maintained by Aarjava Metha.*
+*Maintained by Aarjav Ametha.*
