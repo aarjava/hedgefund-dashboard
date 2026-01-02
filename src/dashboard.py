@@ -45,7 +45,7 @@ with st.sidebar:
     st.title("🎛️ Research Config")
     
     st.subheader("1. Asset Selection")
-    t_mode = st.radio("Selection Mode", ["Preset Universe", "Custom Ticker"], horizontal=True)
+    t_mode = st.radio("Selection Mode", ["Preset Universe", "Custom Ticker"], horizontal=True, help="Choose between a predefined list of assets or enter a custom ticker.")
     
     if t_mode == "Preset Universe":
         universe = ["SPY", "QQQ", "IWM", "GLD", "TLT", "XLK", "XLE", "BTC-USD", "ETH-USD"]
@@ -72,11 +72,11 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("4. Research Rigor")
     st.info("Regime Classification: Active")
-    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05)
+    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05, help="Higher percentile = stricter definition of 'High Volatility' (e.g., 0.90 means top 10% most volatile days).")
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1) / 10000
-    allow_short = st.checkbox("Allow Short Selling?", value=False)
+    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1, help="One-way transaction cost in basis points (1 bps = 0.01%).") / 10000
+    allow_short = st.checkbox("Allow Short Selling?", value=False, help="If checked, strategy takes a short position (-1) when the signal is bearish.")
 
 
 # --- Data Ingestion ---
