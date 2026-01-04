@@ -51,7 +51,7 @@ with st.sidebar:
         universe = ["SPY", "QQQ", "IWM", "GLD", "TLT", "XLK", "XLE", "BTC-USD", "ETH-USD"]
         ticker = st.selectbox("Symbol", universe, index=0)
     else:
-        ticker = st.text_input("Enter Symol (Yahoo Finance)", value="NVDA").upper()
+        ticker = st.text_input("Enter Symbol (Yahoo Finance)", value="NVDA").upper()
     
     st.subheader("2. Time Horizon")
     date_mode = st.selectbox("Date Range", ["Last 5 Years", "Last 10 Years", "Max", "Custom"])
@@ -72,7 +72,7 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("4. Research Rigor")
     st.info("Regime Classification: Active")
-    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05)
+    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05, help="Threshold percentile to classify volatility as 'High'. E.g., 0.75 means top 25% of volatility readings.")
     
     st.subheader("5. Backtest Settings")
     bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1) / 10000
@@ -114,10 +114,10 @@ prev = df.iloc[-2]
 chg_pct = latest['Daily_Return']
 
 h1, h2, h3, h4 = st.columns(4)
-h1.metric("Asset", f"{ticker} (${latest['Close']:.2f})", f"{chg_pct:.2%}")
-h2.metric("Current Regime", latest['Vol_Regime'])
-h3.metric(f"Volatility ({vol_q_high:.0%}-tile)", f"{latest['Vol_21d']:.2%}")
-h4.metric("Trend Status", "BULLISH" if latest['Close'] > latest[f'SMA_{sma_window}'] else "BEARISH")
+h1.metric("Asset", f"{ticker} (${latest['Close']:.2f})", f"{chg_pct:.2%}", help="Current asset price and daily percent change.")
+h2.metric("Current Regime", latest['Vol_Regime'], help="Current market volatility regime based on historical data.")
+h3.metric(f"Volatility ({vol_q_high:.0%}-tile)", f"{latest['Vol_21d']:.2%}", help=f"Current 21-day annualized volatility vs {vol_q_high:.0%} percentile threshold.")
+h4.metric("Trend Status", "BULLISH" if latest['Close'] > latest[f'SMA_{sma_window}'] else "BEARISH", help=f"Market trend based on price vs {sma_window}-day SMA.")
 
 # --- Tabs ---
 tab_ov, tab_regime, tab_bt, tab_rep = st.tabs(["📈 Overview", "🌪️ Regime Analysis", "🧪 Backtest Engine", "📄 Report"])
@@ -241,5 +241,6 @@ with tab_rep:
             label="Download Full Research Data (CSV)",
             data=res_df.to_csv().encode('utf-8'),
             file_name=f"{ticker}_research_data.csv",
-            mime="text/csv"
+            mime="text/csv",
+            help="Download the complete dataset including prices, indicators, and backtest results."
         )
