@@ -49,9 +49,9 @@ with st.sidebar:
     
     if t_mode == "Preset Universe":
         universe = ["SPY", "QQQ", "IWM", "GLD", "TLT", "XLK", "XLE", "BTC-USD", "ETH-USD"]
-        ticker = st.selectbox("Symbol", universe, index=0)
+        ticker = st.selectbox("Symbol", universe, index=0, help="Select an asset from the preset universe.")
     else:
-        ticker = st.text_input("Enter Symol (Yahoo Finance)", value="NVDA").upper()
+        ticker = st.text_input("Enter Symbol (Yahoo Finance)", value="NVDA", help="Enter a valid Yahoo Finance ticker symbol (e.g., AAPL, MSFT, ^GSPC).").upper()
     
     st.subheader("2. Time Horizon")
     date_mode = st.selectbox("Date Range", ["Last 5 Years", "Last 10 Years", "Max", "Custom"])
@@ -72,10 +72,10 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("4. Research Rigor")
     st.info("Regime Classification: Active")
-    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05)
+    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05, help="The percentile threshold for defining 'High Volatility'. Higher values mean fewer days are classified as high stress.")
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1) / 10000
+    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1, help="Simulated trading cost per side (buy/sell). 10 bps = 0.10%.") / 10000
     allow_short = st.checkbox("Allow Short Selling?", value=False)
 
 
