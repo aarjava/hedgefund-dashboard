@@ -72,11 +72,11 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("4. Research Rigor")
     st.info("Regime Classification: Active")
-    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05)
+    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05, help="Quantile threshold to define High Volatility regime (e.g., 0.95 = top 5% volatility).")
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1) / 10000
-    allow_short = st.checkbox("Allow Short Selling?", value=False)
+    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1, help="Basis points per trade (commission + slippage). 10 bps = 0.10%.") / 10000
+    allow_short = st.checkbox("Allow Short Selling?", value=False, help="If checked, strategy takes short positions (-1) on negative signals. If unchecked, it moves to Cash (0).")
 
 
 # --- Data Ingestion ---
@@ -117,7 +117,8 @@ h1, h2, h3, h4 = st.columns(4)
 h1.metric("Asset", f"{ticker} (${latest['Close']:.2f})", f"{chg_pct:.2%}")
 h2.metric("Current Regime", latest['Vol_Regime'])
 h3.metric(f"Volatility ({vol_q_high:.0%}-tile)", f"{latest['Vol_21d']:.2%}")
-h4.metric("Trend Status", "BULLISH" if latest['Close'] > latest[f'SMA_{sma_window}'] else "BEARISH")
+trend_val = "BULLISH" if latest['Close'] > latest[f'SMA_{sma_window}'] else "BEARISH"
+h4.metric("Trend Status", trend_val, delta="Above SMA" if trend_val == "BULLISH" else "-Below SMA")
 
 # --- Tabs ---
 tab_ov, tab_regime, tab_bt, tab_rep = st.tabs(["📈 Overview", "🌪️ Regime Analysis", "🧪 Backtest Engine", "📄 Report"])
