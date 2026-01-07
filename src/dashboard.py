@@ -51,7 +51,7 @@ with st.sidebar:
         universe = ["SPY", "QQQ", "IWM", "GLD", "TLT", "XLK", "XLE", "BTC-USD", "ETH-USD"]
         ticker = st.selectbox("Symbol", universe, index=0)
     else:
-        ticker = st.text_input("Enter Symol (Yahoo Finance)", value="NVDA").upper()
+        ticker = st.text_input("Enter Symbol (Yahoo Finance)", value="NVDA", help="Enter a valid Yahoo Finance ticker symbol (e.g., AAPL, MSFT).").upper()
     
     st.subheader("2. Time Horizon")
     date_mode = st.selectbox("Date Range", ["Last 5 Years", "Last 10 Years", "Max", "Custom"])
@@ -72,11 +72,11 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("4. Research Rigor")
     st.info("Regime Classification: Active")
-    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05)
+    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05, help="Threshold to define 'High Volatility'. E.g., 0.75 means the top 25% of volatility days are classified as High.")
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1) / 10000
-    allow_short = st.checkbox("Allow Short Selling?", value=False)
+    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1, help="Trading cost in basis points (1 bps = 0.01%). Applied to each trade.") / 10000
+    allow_short = st.checkbox("Allow Short Selling?", value=False, help="If checked, the strategy will sell short when the trend is bearish.")
 
 
 # --- Data Ingestion ---
