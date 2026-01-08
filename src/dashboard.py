@@ -72,11 +72,11 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("4. Research Rigor")
     st.info("Regime Classification: Active")
-    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05)
+    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05, help="Quantile threshold defining 'High' volatility (e.g., 0.90 = top 10% most volatile days).")
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1) / 10000
-    allow_short = st.checkbox("Allow Short Selling?", value=False)
+    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1, help="Transaction cost per trade in basis points (10 bps = 0.10%).") / 10000
+    allow_short = st.checkbox("Allow Short Selling?", value=False, help="If enabled, the strategy will short sell when the trend is negative.")
 
 
 # --- Data Ingestion ---
