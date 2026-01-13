@@ -4,15 +4,46 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
+import hashlib
 
 # Import custom modules
 try:
     from modules import data_model, signals, backtester
+    from modules.config import (
+        PRESET_UNIVERSE,
+        DEFAULT_SMA_WINDOW,
+        DEFAULT_MOMENTUM_WINDOW,
+        DEFAULT_VOL_QUANTILE_HIGH,
+        DEFAULT_COST_BPS,
+        MIN_DATA_POINTS,
+    )
 except ImportError:
     import sys
     import os
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
     from src.modules import data_model, signals, backtester
+    from src.modules.config import (
+        PRESET_UNIVERSE,
+        DEFAULT_SMA_WINDOW,
+        DEFAULT_MOMENTUM_WINDOW,
+        DEFAULT_VOL_QUANTILE_HIGH,
+        DEFAULT_COST_BPS,
+        MIN_DATA_POINTS,
+    )
+
+
+def get_cache_key(*args) -> str:
+    """Generate a hash key for caching based on input parameters."""
+    key_str = "_".join(str(arg) for arg in args)
+    return hashlib.md5(key_str.encode()).hexdigest()[:12]
+
+
+# Initialize session state for caching expensive computations
+if 'computed_signals' not in st.session_state:
+    st.session_state.computed_signals = {}
+if 'backtest_results' not in st.session_state:
+    st.session_state.backtest_results = {}
+
 
 # --- Configuration ---
 st.set_page_config(
@@ -48,10 +79,9 @@ with st.sidebar:
     t_mode = st.radio("Selection Mode", ["Preset Universe", "Custom Ticker"], horizontal=True)
     
     if t_mode == "Preset Universe":
-        universe = ["SPY", "QQQ", "IWM", "GLD", "TLT", "XLK", "XLE", "BTC-USD", "ETH-USD"]
-        ticker = st.selectbox("Symbol", universe, index=0)
+        ticker = st.selectbox("Symbol", PRESET_UNIVERSE, index=0)
     else:
-        ticker = st.text_input("Enter Symol (Yahoo Finance)", value="NVDA").upper()
+        ticker = st.text_input("Enter Symbol (Yahoo Finance)", value="NVDA").upper()
     
     st.subheader("2. Time Horizon")
     date_mode = st.selectbox("Date Range", ["Last 5 Years", "Last 10 Years", "Max", "Custom"])
@@ -66,16 +96,33 @@ with st.sidebar:
         period_arg = period_map[date_mode]
 
     st.subheader("3. Signal Parameters")
-    sma_window = st.slider("Trend SMA Window", 10, 200, 50, 10, help="Lookback days for Simple Moving Average trend signal.")
-    mom_window = st.slider("Momentum Lookback (Months)", 1, 24, 12, 1, help="Lookback months for Momentum signal.")
+    sma_window = st.slider(
+        "Trend SMA Window", 10, 200, DEFAULT_SMA_WINDOW, 10, 
+        help="Lookback days for Simple Moving Average trend signal."
+    )
+    mom_window = st.slider(
+        "Momentum Lookback (Months)", 1, 24, DEFAULT_MOMENTUM_WINDOW, 1, 
+        help="Lookback months for Momentum signal."
+    )
     
     st.markdown("---")
     st.subheader("4. Research Rigor")
-    st.info("Regime Classification: Active")
-    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05)
+    use_oos = st.toggle(
+        "Out-of-Sample Mode", 
+        value=False,
+        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting."
+    )
+    if use_oos:
+        st.success("✓ Look-ahead bias removed")
+    else:
+        st.info("Using full-sample quantiles (exploratory mode)")
+    
+    vol_q_high = st.slider(
+        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+    )
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1) / 10000
+    bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
     allow_short = st.checkbox("Allow Short Selling?", value=False)
 
 
@@ -94,16 +141,29 @@ if date_mode == "Custom":
 else:
     df = raw_df.copy()
 
-if len(df) < 50:
-    st.warning("Not enough data points for selected range/period.")
+if len(df) < MIN_DATA_POINTS:
+    st.warning(f"Not enough data points for selected range/period (need at least {MIN_DATA_POINTS}).")
     st.stop()
 
-# --- Signal Calculation ---
-df = signals.add_technical_indicators(df, sma_window=sma_window, mom_window=mom_window)
+# --- Signal Calculation (with session state caching) ---
+signal_cache_key = get_cache_key(ticker, period_arg, sma_window, mom_window, date_mode)
+
+if signal_cache_key not in st.session_state.computed_signals:
+    with st.spinner("Computing technical indicators..."):
+        computed_df = signals.add_technical_indicators(df, sma_window=sma_window, mom_window=mom_window)
+        st.session_state.computed_signals[signal_cache_key] = computed_df
+
+df = st.session_state.computed_signals[signal_cache_key].copy()
 
 # --- Regime Detection ---
-# Using 21-day annualized vol
-df = signals.detect_volatility_regime(df, vol_col='Vol_21d', quantile_high=vol_q_high, quantile_low=0.25)
+# Using 21-day annualized vol with option for out-of-sample analysis
+df = signals.detect_volatility_regime(
+    df, 
+    vol_col='Vol_21d', 
+    quantile_high=vol_q_high, 
+    quantile_low=0.25,
+    use_expanding=use_oos  # Toggle between in-sample and out-of-sample
+)
 
 # --- Dashboard Header ---
 st.markdown("## 🔍 Research Question")
@@ -175,25 +235,56 @@ with tab_regime:
 with tab_bt:
     st.subheader("Strategy Simulation")
     
+    # Out-of-sample mode indicator
+    if use_oos:
+        st.success("🔬 **Out-of-Sample Mode Active** - Regime classification uses only past data at each point")
+    
     # Define Strategy
     # Trend Following
     df['Signal_Trend'] = np.where(df['Close'] > df[f'SMA_{sma_window}'], 1, -1 if allow_short else 0)
     
-    # Run Backtest
-    res_df = backtester.run_backtest(df, 'Signal_Trend', cost_bps=bt_cost, rebalance_freq='M')
+    # Run Backtest (with session state caching)
+    bt_cache_key = get_cache_key(
+        signal_cache_key, bt_cost, allow_short, use_oos, vol_q_high
+    )
+    
+    if bt_cache_key not in st.session_state.backtest_results:
+        with st.spinner("Running backtest simulation..."):
+            res_df = backtester.run_backtest(df, 'Signal_Trend', cost_bps=bt_cost, rebalance_freq='M')
+            st.session_state.backtest_results[bt_cache_key] = res_df
+    
+    res_df = st.session_state.backtest_results[bt_cache_key]
     
     if not res_df.empty:
         # Add Regime to Backtest Results (forward fill valid for analysis)
         res_df['Vol_Regime'] = df['Vol_Regime']
         
-        # 1. Global Metrics
-        strat_metrics = backtester.calculate_perf_metrics(res_df['Equity_Strategy'])
+        # 1. Global Metrics with Bootstrap CI
+        strat_metrics = backtester.calculate_perf_metrics(
+            res_df['Equity_Strategy'], 
+            include_bootstrap_ci=True,
+            n_bootstrap=500
+        )
         bench_metrics = backtester.calculate_perf_metrics(res_df['Equity_Benchmark'])
         
-        col_m1, col_m2, col_m3 = st.columns(3)
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
         col_m1.metric("Global CAGR", f"{strat_metrics['CAGR']:.2%}")
-        col_m2.metric("Global Sharpe", f"{strat_metrics['Sharpe']:.2f}")
+        
+        # Show Sharpe with CI if available
+        sharpe_display = f"{strat_metrics['Sharpe']:.2f}"
+        if strat_metrics.get('Sharpe_CI_Lower') is not None:
+            sharpe_display += f" [{strat_metrics['Sharpe_CI_Lower']:.2f}, {strat_metrics['Sharpe_CI_Upper']:.2f}]"
+        col_m2.metric("Sharpe (95% CI)", sharpe_display)
+        
         col_m3.metric("Max Drawdown", f"{strat_metrics['MaxDD']:.2%}")
+        col_m4.metric("Max DD Duration", f"{strat_metrics.get('MaxDD_Duration', 0)} days")
+        
+        # Additional metrics row
+        col_a1, col_a2, col_a3, col_a4 = st.columns(4)
+        col_a1.metric("Sortino", f"{strat_metrics.get('Sortino', 0):.2f}")
+        col_a2.metric("Calmar", f"{strat_metrics.get('Calmar', 0):.2f}")
+        col_a3.metric("Win Rate", f"{strat_metrics.get('WinRate', 0):.1%}")
+        col_a4.metric("Avg DD Duration", f"{strat_metrics.get('AvgDD_Duration', 0):.0f} days")
         
         # 2. Equity Curve
         fig_eq = go.Figure()
@@ -202,7 +293,28 @@ with tab_bt:
         fig_eq.update_layout(title="Equity Curve", template="plotly_dark", height=400)
         st.plotly_chart(fig_eq, use_container_width=True)
         
-        # 3. Conditional Analysis
+        # 3. Drawdown Chart
+        with st.expander("📉 Drawdown Analysis", expanded=False):
+            fig_dd = go.Figure()
+            fig_dd.add_trace(go.Scatter(
+                x=res_df.index, y=res_df['DD_Strategy'] * 100, 
+                name='Strategy Drawdown', fill='tozeroy',
+                line=dict(color='#ff4b4b')
+            ))
+            fig_dd.add_trace(go.Scatter(
+                x=res_df.index, y=res_df['DD_Benchmark'] * 100, 
+                name='Benchmark Drawdown',
+                line=dict(color='gray', dash='dot')
+            ))
+            fig_dd.update_layout(
+                title="Underwater Equity (Drawdown %)",
+                yaxis_title="Drawdown (%)",
+                template="plotly_dark",
+                height=300
+            )
+            st.plotly_chart(fig_dd, use_container_width=True)
+        
+        # 4. Conditional Analysis
         st.markdown("### 🔬 Conditional Performance by Regime")
         st.info("Does the strategy outperform during High Volatility?")
         
@@ -214,12 +326,64 @@ with tab_bt:
         # Merge
         comparison = pd.concat([cond_stats.add_suffix('_Strat'), bench_cond.add_suffix('_Bench')], axis=1)
         
-        # Reorder columns
-        comparison = comparison[['Ann_Return_Strat', 'Ann_Return_Bench', 'Sharpe_Strat', 'Sharpe_Bench', 'WinRate_Strat']]
+        # Reorder columns - handle missing columns gracefully
+        available_cols = []
+        for col in ['Ann_Return_Strat', 'Ann_Return_Bench', 'Sharpe_Strat', 'Sharpe_Bench', 'WinRate_Strat']:
+            if col in comparison.columns:
+                available_cols.append(col)
+        comparison = comparison[available_cols]
         
         st.dataframe(comparison.style.background_gradient(cmap='RdYlGn', subset=['Ann_Return_Strat', 'Sharpe_Strat']).format("{:.2f}"))
         
         st.markdown("**Key Insight:** Compare 'Sharpe_Strat' vs 'Sharpe_Bench' in the **High** volatility row.")
+        
+        # 5. Walk-Forward Validation (Advanced)
+        with st.expander("🚀 Walk-Forward Validation (Advanced)", expanded=False):
+            st.markdown("""
+            Walk-forward validation splits data into rolling train/test windows to evaluate 
+            out-of-sample performance. This is more rigorous than a single full-sample backtest.
+            """)
+            
+            wf_col1, wf_col2 = st.columns(2)
+            wf_train = wf_col1.number_input("Training Window (months)", value=24, min_value=6, max_value=60)
+            wf_test = wf_col2.number_input("Test Window (months)", value=6, min_value=1, max_value=12)
+            
+            if st.button("Run Walk-Forward Analysis"):
+                with st.spinner("Running walk-forward validation..."):
+                    wf_results = backtester.walk_forward_backtest(
+                        df, 'Signal_Trend',
+                        train_months=wf_train,
+                        test_months=wf_test,
+                        cost_bps=bt_cost,
+                        rebalance_freq='M'
+                    )
+                
+                if wf_results:
+                    st.success(f"✅ Completed {wf_results['n_periods']} walk-forward periods")
+                    
+                    wf_summary = wf_results['summary']
+                    wf_c1, wf_c2, wf_c3 = st.columns(3)
+                    wf_c1.metric("OOS CAGR", f"{wf_summary.get('CAGR', 0):.2%}")
+                    wf_c2.metric("OOS Sharpe", f"{wf_summary.get('Sharpe', 0):.2f}")
+                    wf_c3.metric("OOS Max DD", f"{wf_summary.get('MaxDD', 0):.2%}")
+                    
+                    # Show per-period results
+                    st.markdown("#### Per-Period Results")
+                    period_data = []
+                    for p in wf_results['periods']:
+                        period_data.append({
+                            'Test Period': f"{p['test_start']} to {p['test_end']}",
+                            'CAGR': p['metrics'].get('CAGR', 0),
+                            'Sharpe': p['metrics'].get('Sharpe', 0),
+                            'MaxDD': p['metrics'].get('MaxDD', 0)
+                        })
+                    st.dataframe(pd.DataFrame(period_data).style.format({
+                        'CAGR': '{:.2%}',
+                        'Sharpe': '{:.2f}',
+                        'MaxDD': '{:.2%}'
+                    }))
+                else:
+                    st.warning("Insufficient data for walk-forward validation with current settings.")
 
 # --- TAB 4: REPORT ---
 with tab_rep:

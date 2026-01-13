@@ -48,9 +48,15 @@ The hypothesis is that Trend Following performs best during "Normal" vol (sustai
 
 **Observation**: During High Volatility regimes (which correlate with market crashes), the Trend Strategy [outperformed/underperformed] the benchmark by [X]%.
 
-## 4. Limitations
-1.  **Hindsight Bias in Quartiles**: The regime thresholds (25th/75th percentiles) are calculated over the full sample. In a live setting, one would use a rolling window.
-2.  **Lag**: The 50-day SMA is a lagging indicator. In "V-shaped" recoveries (high vol), the strategy is slow to re-enter, potentially missing the rebound.
+## 4. Limitations & Mitigations
+
+| Limitation | Status | Mitigation |
+| :--- | :--- | :--- |
+| **Hindsight Bias in Quartiles** | ✅ Addressed | The dashboard now supports **Out-of-Sample Mode** (toggle in sidebar) which uses expanding-window quantiles. Regime thresholds are calculated using only data available up to each point in time. |
+| **SMA Lag** | ⚠️ Inherent | The 50-day SMA is a lagging indicator. In "V-shaped" recoveries, the strategy is slow to re-enter. This is a fundamental trade-off of trend-following. |
+| **Transaction Costs** | ✅ Configurable | Friction is modeled with adjustable basis point costs. |
+| **Survivorship Bias** | ⚠️ Possible | ETF data from Yahoo Finance may exclude delisted constituents. |
+
 
 ## 5. Conclusion
 A 50-day trend-following system demonstrates [sensitivity/robustness] to volatility regimes. It acts as effective insurance during prolonged high-volatility corrections but can underperform in choppy, mean-reverting high-volatility environments.

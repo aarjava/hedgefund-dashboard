@@ -4,7 +4,8 @@
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-44%20Passing-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-85%25-yellow)
 
 ## 📊 Overview
 
@@ -16,30 +17,42 @@ Built for seamless interactivity, this application empowers researchers to move 
 
 ### 1. Dynamic Signal Generation
 *   **Trend Following**: Adjustable Simple Moving Average (SMA) logic (e.g., Price > 200d SMA).
-*   **Momentum**: customizable lookback windows (e.g., classical 12-1 month momentum).
-*   **Mean Reversion**: Integrated RSI and volatility oscillators.
+*   **Momentum**: Customizable lookback windows (e.g., classical 12-1 month momentum).
+*   **Mean Reversion**: RSI-based signals with Bollinger Band confirmation.
+*   **Volatility Breakout**: Capture momentum during volatility expansion.
+*   **Dual Momentum**: Combined absolute + relative momentum (Antonacci-style).
+*   **Composite Signals**: Weighted combination of multiple strategies.
 
 ### 2. Regime-Conditional Backtesting
 *   **Market Segmentation**: Automatically detects Low, Normal, and High volatility regimes using rolling realized volatility quantiles.
+*   **Out-of-Sample Mode**: Toggle to use expanding-window quantiles for rigorous backtesting without look-ahead bias.
 *   **Conditional Performance**: Calculates Sharpe, Sortino, and Win Rate *per regime*, answering the critical question: *"Does this strategy survive high-volatility crashes?"*
 
 ### 3. Professional Backtest Engine
-*   **Vectorized Simulation**: High-speed backtesting across daily or monthly rebalancing frequencies.
+*   **Vectorized Simulation**: High-speed backtesting across daily, weekly, or monthly rebalancing frequencies.
 *   **Friction Modeling**: Configurable transaction costs (basis points) to simulate real-world execution drag.
 *   **Long/Short Logic**: Toggle between Long-Only and Long/Short mandates.
+*   **Walk-Forward Validation**: Rolling out-of-sample testing for robust performance evaluation.
+*   **Bootstrap Confidence Intervals**: Statistical significance testing for Sharpe ratios.
 
 ### 4. Interactive Visualization
-*   **Equity Curves**: Compare Strategy vs. Benchmark wealth accumulation in log or linear scale.
-*   **Drawdown Analysis**: Visualize underwater periods to assess tail risk.
+*   **Equity Curves**: Compare Strategy vs. Benchmark wealth accumulation.
+*   **Drawdown Analysis**: Visualize underwater periods with duration metrics.
 *   **Signal Overlays**: Inspect specific trade entry/exit points directly on the price chart.
+*   **8+ Performance Metrics**: CAGR, Sharpe (with 95% CI), Sortino, Calmar, Max DD, DD Duration, Win Rate.
 
 ## 🛠 Tech Stack
 
-*   **Core**: Python 3.8+
-*   **Frontend**: [Streamlit](https://streamlit.io/)
-*   **Data Analysis**: Pandas, NumPy
-*   **Data Feed**: [yfinance](https://pypi.org/project/yfinance/)
-*   **Visualization**: Plotly Express & Graph Models
+| Category | Technologies |
+|:---|:---|
+| **Core** | Python 3.8+ |
+| **Frontend** | [Streamlit](https://streamlit.io/) |
+| **Data Analysis** | Pandas, NumPy |
+| **Data Feed** | [yfinance](https://pypi.org/project/yfinance/) |
+| **Visualization** | Plotly Express & Graph Objects |
+| **Testing** | pytest, pytest-cov |
+| **Linting** | Ruff, Black, MyPy |
+| **CI/CD** | GitHub Actions |
 
 ## ⚡ Getting Started
 
@@ -51,18 +64,27 @@ Built for seamless interactivity, this application empowers researchers to move 
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/hedgefund-dashboard.git
+    git clone https://github.com/aarjavametha/hedgefund-dashboard.git
     cd hedgefund-dashboard
     ```
 
 2.  **Install Dependencies**
     ```bash
+    # Using pip
     pip install -r requirements.txt
+    
+    # Or using modern packaging (recommended)
+    pip install -e ".[dev]"
     ```
 
 3.  **Run the Application**
     ```bash
     streamlit run src/dashboard.py
+    ```
+
+4.  **Run Tests**
+    ```bash
+    pytest tests/ -v
     ```
 
 ## 📖 User Guide
@@ -71,7 +93,7 @@ Built for seamless interactivity, this application empowers researchers to move 
 | :--- | :--- |
 | **📈 Overview** | Real-time snapshot of the asset's price, current trend status, and volatility regime. |
 | **🌪️ Regime Analysis** | Deep dive into the distribution of market volatility. Visualize how often the market is in "High Stress" mode. |
-| **🧪 Backtest Engine** | The core research lab. Compare your configured strategy against the benchmark. Analyze conditional statistics. |
+| **🧪 Backtest Engine** | The core research lab. Compare your configured strategy against the benchmark. Analyze conditional statistics. Includes walk-forward validation. |
 | **📄 Report** | Summary of findings and raw data export for further analysis in Jupyter/Excel. |
 
 ## 🔬 Methodology
@@ -80,8 +102,61 @@ This project draws inspiration from seminal literature in quantitative finance, 
 
 *   **Jegadeesh, N., & Titman, S. (1993)**. Returns to Buying Winners and Selling Losers.
 *   **Moskowitz, T. J., Ooi, Y. H., & Pedersen, L. H. (2012)**. Time series momentum.
+*   **Antonacci, G. (2014)**. Dual Momentum Investing.
 
 The underlying hypothesis is that price trends are persistent (autocorrelated) in normal markets but break down during mean-reverting (high volatility) shocks. This tool allows you to quantify that breakdown.
+
+## 📁 Project Structure
+
+```
+hedgefund-dashboard/
+├── src/
+│   ├── dashboard.py          # Main Streamlit application
+│   ├── modules/
+│   │   ├── __init__.py
+│   │   ├── config.py         # Centralized configuration
+│   │   ├── data_model.py     # Data fetching with caching
+│   │   ├── signals.py        # Core technical indicators
+│   │   ├── signals_advanced.py  # Advanced signal strategies
+│   │   └── backtester.py     # Backtest engine with metrics
+├── tests/
+│   ├── test_backtester.py
+│   ├── test_signals.py
+│   ├── test_signals_advanced.py
+│   └── test_data_model.py
+├── .github/
+│   └── workflows/
+│       └── ci.yml            # GitHub Actions CI/CD
+├── requirements.txt
+├── pyproject.toml            # Modern Python packaging
+├── research_note.md
+└── README.md
+```
+
+## 🧪 Testing
+
+The project maintains a comprehensive test suite with 44+ tests:
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=src --cov-report=term-missing
+
+# Run specific test file
+pytest tests/test_backtester.py -v
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## ⚖️ Disclaimer
 
