@@ -45,16 +45,16 @@ with st.sidebar:
     st.title("🎛️ Research Config")
     
     st.subheader("1. Asset Selection")
-    t_mode = st.radio("Selection Mode", ["Preset Universe", "Custom Ticker"], horizontal=True)
+    t_mode = st.radio("Selection Mode", ["Preset Universe", "Custom Ticker"], horizontal=True, help="Choose between a preset list of assets or enter a custom ticker.")
     
     if t_mode == "Preset Universe":
         universe = ["SPY", "QQQ", "IWM", "GLD", "TLT", "XLK", "XLE", "BTC-USD", "ETH-USD"]
-        ticker = st.selectbox("Symbol", universe, index=0)
+        ticker = st.selectbox("Symbol", universe, index=0, help="Select an asset from the popular preset list.")
     else:
-        ticker = st.text_input("Enter Symol (Yahoo Finance)", value="NVDA").upper()
+        ticker = st.text_input("Enter Symol (Yahoo Finance)", value="NVDA", help="Enter a valid Yahoo Finance ticker symbol (e.g. AAPL, BTC-USD).").upper()
     
     st.subheader("2. Time Horizon")
-    date_mode = st.selectbox("Date Range", ["Last 5 Years", "Last 10 Years", "Max", "Custom"])
+    date_mode = st.selectbox("Date Range", ["Last 5 Years", "Last 10 Years", "Max", "Custom"], help="Select the historical period for analysis.")
     
     if date_mode == "Custom":
         d_col1, d_col2 = st.columns(2)
@@ -72,11 +72,11 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("4. Research Rigor")
     st.info("Regime Classification: Active")
-    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05)
+    vol_q_high = st.slider("High Volatility Quantile", 0.5, 0.95, 0.75, 0.05, help="Threshold for defining a high volatility regime. Example: 0.75 means the top 25% of volatility days.")
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1) / 10000
-    allow_short = st.checkbox("Allow Short Selling?", value=False)
+    bt_cost = st.number_input("Transaction Cost (bps)", value=10, step=1, help="Cost per trade in basis points (1 bps = 0.01%). Example: 10 bps = 0.10% fee.") / 10000
+    allow_short = st.checkbox("Allow Short Selling?", value=False, help="If checked, the strategy will short sell when the signal is bearish.")
 
 
 # --- Data Ingestion ---
