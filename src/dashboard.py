@@ -118,11 +118,17 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
     
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05,
+        help="Defines the threshold for 'High Volatility'. E.g., 0.80 means the top 20% of most volatile days."
     )
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
+    bt_cost = st.number_input(
+        "Transaction Cost (bps)",
+        value=DEFAULT_COST_BPS,
+        step=1,
+        help="Cost per trade in basis points. E.g., 10 bps = 0.10% slippage + commission."
+    ) / 10000
     allow_short = st.checkbox("Allow Short Selling?", value=False)
 
 
