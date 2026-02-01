@@ -4,11 +4,12 @@ Data ingestion module for fetching historical market data.
 Supports fetching from Yahoo Finance with caching for performance.
 """
 
-import yfinance as yf
-import pandas as pd
-import streamlit as st
 import logging
 from typing import Optional
+
+import pandas as pd
+import streamlit as st
+import yfinance as yf
 
 try:
     from .config import CACHE_TTL_SECONDS

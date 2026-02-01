@@ -5,16 +5,17 @@ Provides additional trading signals beyond basic trend and momentum,
 including mean reversion, volatility breakout, and composite signals.
 """
 
-import pandas as pd
-import numpy as np
-from typing import Literal, Optional, Tuple
 import logging
+from typing import Optional, Tuple
+
+import numpy as np
+import pandas as pd
 
 try:
     from .config import (
-        TRADING_DAYS_PER_YEAR,
-        TRADING_DAYS_PER_MONTH,
         DEFAULT_RSI_WINDOW,
+        TRADING_DAYS_PER_MONTH,
+        TRADING_DAYS_PER_YEAR,
     )
 except ImportError:
     TRADING_DAYS_PER_YEAR = 252

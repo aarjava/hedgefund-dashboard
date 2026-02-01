@@ -1,13 +1,14 @@
-import pandas as pd
+from typing import Optional
+
 import numpy as np
-from typing import Literal, Optional
+import pandas as pd
 
 try:
     from .config import (
-        TRADING_DAYS_PER_YEAR,
-        TRADING_DAYS_PER_MONTH,
         DEFAULT_RSI_WINDOW,
         MIN_PERIODS_FOR_EXPANDING,
+        TRADING_DAYS_PER_MONTH,
+        TRADING_DAYS_PER_YEAR,
     )
 except ImportError:
     # Fallback for direct execution
