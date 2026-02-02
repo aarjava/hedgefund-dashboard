@@ -221,7 +221,9 @@ with tab_ov:
     # Interactive Price Chart
     fig = go.Figure()
     fig.add_trace(
-        go.Scatter(x=df.index, y=df["Close"], name="Close Price", line={"color": "white", "width": 1})
+        go.Scatter(
+            x=df.index, y=df["Close"], name="Close Price", line={"color": "white", "width": 1}
+        )
     )
     fig.add_trace(
         go.Scatter(
