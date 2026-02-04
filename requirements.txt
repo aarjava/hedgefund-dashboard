@@ -9,6 +9,7 @@ yfinance>=0.2.30
 
 # Visualization
 plotly>=5.18.0
+matplotlib>=3.5.0
 
 # Development & Testing
 pytest>=7.0.0
