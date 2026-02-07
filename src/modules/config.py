@@ -19,16 +19,13 @@ DEFAULT_VOL_QUANTILE_LOW = 0.25
 
 # === Backtest Defaults ===
 DEFAULT_COST_BPS = 10  # In basis points (10 bps = 0.10%)
-DEFAULT_REBALANCE_FREQ = 'M'  # Monthly
+DEFAULT_REBALANCE_FREQ = "M"  # Monthly
 
 # === Caching ===
 CACHE_TTL_SECONDS = 3600 * 24  # 24 hours
 
 # === Asset Universe ===
-PRESET_UNIVERSE = [
-    "SPY", "QQQ", "IWM", "GLD", "TLT", 
-    "XLK", "XLE", "BTC-USD", "ETH-USD"
-]
+PRESET_UNIVERSE = ["SPY", "QQQ", "IWM", "GLD", "TLT", "XLK", "XLE", "BTC-USD", "ETH-USD"]
 
 # === Minimum Data Requirements ===
 MIN_DATA_POINTS = 50
