@@ -118,12 +118,22 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
     
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05,
+        help="Threshold for defining 'High Volatility'. A value of 0.75 means the top 25% of volatility readings are considered High."
     )
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
-    allow_short = st.checkbox("Allow Short Selling?", value=False)
+    bt_cost = st.number_input(
+        "Transaction Cost (bps)",
+        value=DEFAULT_COST_BPS,
+        step=1,
+        help="Simulates execution slippage and commissions. 10 bps = 0.10%."
+    ) / 10000
+    allow_short = st.checkbox(
+        "Allow Short Selling?",
+        value=False,
+        help="If checked, the strategy will short the asset when the trend is negative, profiting from price declines."
+    )
 
 
 # --- Data Ingestion ---
@@ -345,8 +355,20 @@ with tab_bt:
             """)
             
             wf_col1, wf_col2 = st.columns(2)
-            wf_train = wf_col1.number_input("Training Window (months)", value=24, min_value=6, max_value=60)
-            wf_test = wf_col2.number_input("Test Window (months)", value=6, min_value=1, max_value=12)
+            wf_train = wf_col1.number_input(
+                "Training Window (months)",
+                value=24,
+                min_value=6,
+                max_value=60,
+                help="Number of months used to train the model in each step."
+            )
+            wf_test = wf_col2.number_input(
+                "Test Window (months)",
+                value=6,
+                min_value=1,
+                max_value=12,
+                help="Number of months used to test the model out-of-sample in each step."
+            )
             
             if st.button("Run Walk-Forward Analysis"):
                 with st.spinner("Running walk-forward validation..."):
