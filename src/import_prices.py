@@ -24,12 +24,13 @@ def analyze_stock(ticker_symbol, period="1y"):
     print(f"Momentum:      {latest['Momentum_12M_1M']:.2%}")
     print(f"RSI (14):      {latest['RSI_14']:.2f}")
 
-    if latest['Close'] > latest['SMA_50']:
+    if latest["Close"] > latest["SMA_50"]:
         print("Trend: BULLISH 🐂")
     else:
         print("Trend: BEARISH 🐻")
 
     return df
+
 
 if __name__ == "__main__":
     # Add your favorite stocks here!

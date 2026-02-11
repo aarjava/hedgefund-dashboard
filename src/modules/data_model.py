@@ -21,11 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
-def fetch_stock_data(
-    ticker: str,
-    period: str = "10y",
-    interval: str = "1d"
-) -> pd.DataFrame:
+def fetch_stock_data(ticker: str, period: str = "10y", interval: str = "1d") -> pd.DataFrame:
     """
     Fetch historical OHLCV data from Yahoo Finance with caching.
 
@@ -79,7 +75,7 @@ def validate_ticker(ticker: str) -> bool:
         stock = yf.Ticker(ticker)
         info = stock.info
         # Check if we got valid info back
-        return info.get('regularMarketPrice') is not None
+        return info.get("regularMarketPrice") is not None
     except Exception as e:
         logger.debug(f"Ticker validation failed for {ticker}: {e}")
         return False
@@ -108,4 +104,3 @@ def get_ticker_info(ticker: str) -> Optional[dict]:
     except Exception as e:
         logger.debug(f"Could not get info for {ticker}: {e}")
         return None
-

@@ -19,10 +19,7 @@ except ImportError:
 
 
 def add_technical_indicators(
-    df: pd.DataFrame,
-    sma_window: int = 50,
-    mom_window: int = 12,
-    vol_window: int = 21
+    df: pd.DataFrame, sma_window: int = 50, mom_window: int = 12, vol_window: int = 21
 ) -> pd.DataFrame:
     """
     Adds technical indicators to the dataframe.
@@ -42,8 +39,8 @@ def add_technical_indicators(
     df = df.copy()
 
     # 1. Trend: Moving Averages
-    df[f'SMA_{sma_window}'] = df['Close'].rolling(window=sma_window).mean()
-    df['SMA_200'] = df['Close'].rolling(window=200).mean()  # Standard long-term benchmark
+    df[f"SMA_{sma_window}"] = df["Close"].rolling(window=sma_window).mean()
+    df["SMA_200"] = df["Close"].rolling(window=200).mean()  # Standard long-term benchmark
 
     # 2. Momentum (12-1 Month equivalent)
     # We approximate months as 21 trading days.
@@ -51,39 +48,36 @@ def add_technical_indicators(
     lag_start = TRADING_DAYS_PER_MONTH  # Skip most recent month
     lag_end_custom = mom_window * TRADING_DAYS_PER_MONTH
 
-    df[f'Momentum_{mom_window}M_1M'] = (
-        df['Close'].shift(lag_start) / df['Close'].shift(lag_end_custom) - 1
+    df[f"Momentum_{mom_window}M_1M"] = (
+        df["Close"].shift(lag_start) / df["Close"].shift(lag_end_custom) - 1
     )
 
     # 3. Volatility (Annualized)
-    df['Daily_Return'] = df['Close'].pct_change()
-    df[f'Vol_{vol_window}d'] = (
-        df['Daily_Return'].rolling(window=vol_window).std()
-        * (TRADING_DAYS_PER_YEAR ** 0.5)
+    df["Daily_Return"] = df["Close"].pct_change()
+    df[f"Vol_{vol_window}d"] = df["Daily_Return"].rolling(window=vol_window).std() * (
+        TRADING_DAYS_PER_YEAR**0.5
     )
 
     # 4. Relative Strength Index (RSI) - Vectorized calculation
-    delta = df['Close'].diff()
+    delta = df["Close"].diff()
     gain = delta.where(delta > 0, 0.0).rolling(window=DEFAULT_RSI_WINDOW).mean()
     loss = (-delta.where(delta < 0, 0.0)).rolling(window=DEFAULT_RSI_WINDOW).mean()
     rs = gain / loss.replace(0, np.nan)  # Avoid division by zero
-    df['RSI_14'] = 100 - (100 / (1 + rs))
+    df["RSI_14"] = 100 - (100 / (1 + rs))
 
     # 5. Distance from SMA (Trend Strength)
-    df['Trend_Strength_Pct'] = (
-        (df['Close'] - df[f'SMA_{sma_window}']) / df[f'SMA_{sma_window}']
-    )
+    df["Trend_Strength_Pct"] = (df["Close"] - df[f"SMA_{sma_window}"]) / df[f"SMA_{sma_window}"]
 
     return df
 
 
 def detect_volatility_regime(
     df: pd.DataFrame,
-    vol_col: str = 'Vol_21d',
+    vol_col: str = "Vol_21d",
     quantile_high: float = 0.75,
     quantile_low: float = 0.25,
     use_expanding: bool = False,
-    min_periods: Optional[int] = None
+    min_periods: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Classifies periods into Volatility Regimes (Low, Normal, High).
@@ -125,35 +119,32 @@ def detect_volatility_regime(
         thresh_low = df[vol_col].expanding(min_periods=min_periods).quantile(quantile_low)
 
         # Vectorized regime classification with expanding thresholds
-        df['Vol_Regime'] = 'Normal'
-        df.loc[df[vol_col] > thresh_high, 'Vol_Regime'] = 'High'
-        df.loc[df[vol_col] < thresh_low, 'Vol_Regime'] = 'Low'
+        df["Vol_Regime"] = "Normal"
+        df.loc[df[vol_col] > thresh_high, "Vol_Regime"] = "High"
+        df.loc[df[vol_col] < thresh_low, "Vol_Regime"] = "Low"
 
         # Mark early periods as 'Unknown' where we don't have enough data
-        df.loc[thresh_high.isna(), 'Vol_Regime'] = 'Unknown'
+        df.loc[thresh_high.isna(), "Vol_Regime"] = "Unknown"
     else:
         # IN-SAMPLE: Full-sample quantiles (look-ahead bias, but standard for regime analysis)
         # Use this for exploratory analysis and visualization
         thresh_high = df[vol_col].quantile(quantile_high)
         thresh_low = df[vol_col].quantile(quantile_low)
 
-        conditions = [
-            (df[vol_col] > thresh_high),
-            (df[vol_col] < thresh_low)
-        ]
-        choices = ['High', 'Low']
+        conditions = [(df[vol_col] > thresh_high), (df[vol_col] < thresh_low)]
+        choices = ["High", "Low"]
 
-        df['Vol_Regime'] = np.select(conditions, choices, default='Normal')
+        df["Vol_Regime"] = np.select(conditions, choices, default="Normal")
 
     return df
 
 
 def detect_volatility_regime_oos(
     df: pd.DataFrame,
-    vol_col: str = 'Vol_21d',
+    vol_col: str = "Vol_21d",
     quantile_high: float = 0.75,
     quantile_low: float = 0.25,
-    min_periods: int = MIN_PERIODS_FOR_EXPANDING
+    min_periods: int = MIN_PERIODS_FOR_EXPANDING,
 ) -> pd.DataFrame:
     """
     Convenience wrapper for out-of-sample regime detection.
@@ -176,5 +167,5 @@ def detect_volatility_regime_oos(
         quantile_high=quantile_high,
         quantile_low=quantile_low,
         use_expanding=True,
-        min_periods=min_periods
+        min_periods=min_periods,
     )

@@ -12,7 +12,7 @@ def run(playwright):
     # Wait for the app to load fully
     try:
         page.wait_for_text("Research Question", timeout=60000)
-    except:
+    except Exception:
         print("Timeout waiting for 'Research Question' text.")
         page.screenshot(path="verification/timeout.png")
         # Continue anyway to see if we can salvage
@@ -43,7 +43,7 @@ def run(playwright):
         # Hover over "High Volatility Quantile" (Index 3, 0-based)
         print("Hovering over High Volatility Quantile tooltip...")
         tooltips.nth(3).hover()
-        page.wait_for_timeout(2000) # Wait for tooltip to appear
+        page.wait_for_timeout(2000)  # Wait for tooltip to appear
         # Verify content if possible, but screenshot is key
         page.screenshot(path="verification/tooltip_volatility.png")
 
@@ -62,6 +62,7 @@ def run(playwright):
         print("Not enough tooltips found. Check if app loaded correctly.")
 
     browser.close()
+
 
 with sync_playwright() as playwright:
     run(playwright)

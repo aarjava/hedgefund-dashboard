@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PerformanceMetrics:
     """Container for performance metrics with confidence intervals."""
+
     cagr: float
     volatility: float
     sharpe: float
@@ -54,7 +55,7 @@ class PerformanceMetrics:
             "MaxDD_Duration": self.max_dd_duration,
             "AvgDD_Duration": self.avg_dd_duration,
             "Calmar": self.calmar,
-            "WinRate": self.win_rate
+            "WinRate": self.win_rate,
         }
 
 
@@ -62,7 +63,7 @@ def bootstrap_sharpe_ci(
     returns: pd.Series,
     n_bootstrap: int = 1000,
     confidence_level: float = 0.95,
-    random_state: Optional[int] = None
+    random_state: Optional[int] = None,
 ) -> Tuple[float, float]:
     """
     Calculate bootstrap confidence interval for Sharpe ratio.
@@ -150,7 +151,7 @@ def calculate_perf_metrics(
     equity_curve: pd.Series,
     freq: int = TRADING_DAYS_PER_YEAR,
     include_bootstrap_ci: bool = False,
-    n_bootstrap: int = 1000
+    n_bootstrap: int = 1000,
 ) -> Dict[str, Any]:
     """
     Calculate comprehensive performance metrics.
@@ -185,7 +186,7 @@ def calculate_perf_metrics(
     cagr = (equity_curve.iloc[-1]) ** (1 / years) - 1
 
     # Volatility
-    ann_vol = daily_rets.std() * (freq ** 0.5)
+    ann_vol = daily_rets.std() * (freq**0.5)
 
     # Sharpe (Assume 0% risk free for simplicity)
     sharpe = cagr / ann_vol if ann_vol != 0 else 0
@@ -193,13 +194,11 @@ def calculate_perf_metrics(
     # Bootstrap CI for Sharpe
     sharpe_ci_lower, sharpe_ci_upper = None, None
     if include_bootstrap_ci:
-        sharpe_ci_lower, sharpe_ci_upper = bootstrap_sharpe_ci(
-            daily_rets, n_bootstrap=n_bootstrap
-        )
+        sharpe_ci_lower, sharpe_ci_upper = bootstrap_sharpe_ci(daily_rets, n_bootstrap=n_bootstrap)
 
     # Sortino (Downside deviation)
     downside_rets = daily_rets[daily_rets < 0]
-    downside_dev = downside_rets.std() * (freq ** 0.5) if len(downside_rets) > 0 else 0
+    downside_dev = downside_rets.std() * (freq**0.5) if len(downside_rets) > 0 else 0
     sortino = cagr / downside_dev if downside_dev != 0 else 0
 
     # Max Drawdown
@@ -216,9 +215,7 @@ def calculate_perf_metrics(
     # Win Rate (Daily)
     win_rate = (daily_rets > 0).mean()
 
-    logger.info(
-        f"Performance: CAGR={cagr:.2%}, Sharpe={sharpe:.2f}, MaxDD={max_dd:.2%}"
-    )
+    logger.info(f"Performance: CAGR={cagr:.2%}, Sharpe={sharpe:.2f}, MaxDD={max_dd:.2%}")
 
     return {
         "CAGR": cagr,
@@ -231,7 +228,7 @@ def calculate_perf_metrics(
         "MaxDD_Duration": max_dd_duration,
         "AvgDD_Duration": avg_dd_duration,
         "Calmar": calmar,
-        "WinRate": win_rate
+        "WinRate": win_rate,
     }
 
 
@@ -239,7 +236,7 @@ def run_backtest(
     df: pd.DataFrame,
     signal_col: str,
     cost_bps: float = 0.0010,
-    rebalance_freq: Literal['D', 'W', 'M'] = 'M'
+    rebalance_freq: Literal["D", "W", "M"] = "M",
 ) -> pd.DataFrame:
     """
     Run a vectorized backtest based on a signal column.
@@ -257,49 +254,51 @@ def run_backtest(
         logger.error(f"Invalid input: empty df or missing signal column '{signal_col}'")
         return pd.DataFrame()
 
-    logger.info(f"Running backtest: signal={signal_col}, cost={cost_bps*10000:.0f}bps, freq={rebalance_freq}")
+    logger.info(
+        f"Running backtest: signal={signal_col}, cost={cost_bps*10000:.0f}bps, freq={rebalance_freq}"
+    )
 
     bt_df = df.copy()
 
     # 1. Signal Processing
-    if rebalance_freq == 'D':
+    if rebalance_freq == "D":
         # Daily Rebalance: Position today is determined by Signal yesterday
-        bt_df['Position'] = bt_df[signal_col].shift(1).fillna(0)
+        bt_df["Position"] = bt_df[signal_col].shift(1).fillna(0)
 
-    elif rebalance_freq == 'W':
+    elif rebalance_freq == "W":
         # Weekly Rebalance
-        bt_df['Period'] = bt_df.index.to_period('W')
-        weekly_signals = bt_df.groupby('Period')[signal_col].last()
+        bt_df["Period"] = bt_df.index.to_period("W")
+        weekly_signals = bt_df.groupby("Period")[signal_col].last()
         weekly_positions = weekly_signals.shift(1)
-        bt_df['Position'] = bt_df['Period'].map(weekly_positions)
-        bt_df['Position'] = bt_df['Position'].fillna(0)
+        bt_df["Position"] = bt_df["Period"].map(weekly_positions)
+        bt_df["Position"] = bt_df["Position"].fillna(0)
 
-    elif rebalance_freq == 'M':
+    elif rebalance_freq == "M":
         # Monthly Rebalance
-        bt_df['Period'] = bt_df.index.to_period('M')
-        monthly_signals = bt_df.groupby('Period')[signal_col].last()
+        bt_df["Period"] = bt_df.index.to_period("M")
+        monthly_signals = bt_df.groupby("Period")[signal_col].last()
         monthly_positions = monthly_signals.shift(1)
-        bt_df['Position'] = bt_df['Period'].map(monthly_positions)
-        bt_df['Position'] = bt_df['Position'].fillna(0)
+        bt_df["Position"] = bt_df["Period"].map(monthly_positions)
+        bt_df["Position"] = bt_df["Position"].fillna(0)
     else:
         logger.error(f"Invalid rebalance frequency: {rebalance_freq}")
         return pd.DataFrame()
 
     # 2. Strategy Returns
-    bt_df['Strategy_Return'] = bt_df['Position'] * bt_df['Daily_Return']
+    bt_df["Strategy_Return"] = bt_df["Position"] * bt_df["Daily_Return"]
 
     # 3. Transaction Costs
-    bt_df['Position_Change'] = bt_df['Position'].diff().abs().fillna(0)
-    bt_df['Cost'] = bt_df['Position_Change'] * cost_bps
-    bt_df['Strategy_Net_Return'] = bt_df['Strategy_Return'] - bt_df['Cost']
+    bt_df["Position_Change"] = bt_df["Position"].diff().abs().fillna(0)
+    bt_df["Cost"] = bt_df["Position_Change"] * cost_bps
+    bt_df["Strategy_Net_Return"] = bt_df["Strategy_Return"] - bt_df["Cost"]
 
     # 4. Equity Curves
-    bt_df['Equity_Benchmark'] = (1 + bt_df['Daily_Return']).cumprod()
-    bt_df['Equity_Strategy'] = (1 + bt_df['Strategy_Net_Return']).cumprod()
+    bt_df["Equity_Benchmark"] = (1 + bt_df["Daily_Return"]).cumprod()
+    bt_df["Equity_Strategy"] = (1 + bt_df["Strategy_Net_Return"]).cumprod()
 
     # 5. Drawdown Curves
-    bt_df['DD_Benchmark'] = (bt_df['Equity_Benchmark'] / bt_df['Equity_Benchmark'].cummax()) - 1
-    bt_df['DD_Strategy'] = (bt_df['Equity_Strategy'] / bt_df['Equity_Strategy'].cummax()) - 1
+    bt_df["DD_Benchmark"] = (bt_df["Equity_Benchmark"] / bt_df["Equity_Benchmark"].cummax()) - 1
+    bt_df["DD_Strategy"] = (bt_df["Equity_Strategy"] / bt_df["Equity_Strategy"].cummax()) - 1
 
     logger.info(
         f"Backtest complete: {len(bt_df)} days, "
@@ -310,9 +309,7 @@ def run_backtest(
 
 
 def calculate_conditional_stats(
-    df: pd.DataFrame,
-    strategy_col: str,
-    regime_col: str
+    df: pd.DataFrame, strategy_col: str, regime_col: str
 ) -> pd.DataFrame:
     """
     Calculate performance stats conditioned on a regime column.
@@ -339,18 +336,20 @@ def calculate_conditional_stats(
             continue
 
         avg_ret = subset.mean() * TRADING_DAYS_PER_YEAR
-        vol = subset.std() * (TRADING_DAYS_PER_YEAR ** 0.5)
+        vol = subset.std() * (TRADING_DAYS_PER_YEAR**0.5)
         sharpe = avg_ret / vol if vol != 0 else 0
         win_rate = (subset > 0).mean()
 
-        results.append({
-            "Regime": reg,
-            "Ann_Return": avg_ret,
-            "Volatility": vol,
-            "Sharpe": sharpe,
-            "WinRate": win_rate,
-            "Count": len(subset)
-        })
+        results.append(
+            {
+                "Regime": reg,
+                "Ann_Return": avg_ret,
+                "Volatility": vol,
+                "Sharpe": sharpe,
+                "WinRate": win_rate,
+                "Count": len(subset),
+            }
+        )
 
     logger.debug(f"Conditional stats calculated for {len(results)} regimes")
     return pd.DataFrame(results).set_index("Regime")
@@ -362,7 +361,7 @@ def walk_forward_backtest(
     train_months: int = 24,
     test_months: int = 6,
     cost_bps: float = 0.0010,
-    rebalance_freq: Literal['D', 'W', 'M'] = 'M'
+    rebalance_freq: Literal["D", "W", "M"] = "M",
 ) -> Dict[str, Any]:
     """
     Perform walk-forward validation with rolling training windows.
@@ -389,22 +388,18 @@ def walk_forward_backtest(
         logger.error("Invalid input for walk-forward backtest")
         return {}
 
-    logger.info(
-        f"Walk-forward validation: train={train_months}m, test={test_months}m"
-    )
+    logger.info(f"Walk-forward validation: train={train_months}m, test={test_months}m")
 
     # Convert to monthly periods for slicing
     df = df.copy()
-    df['YearMonth'] = df.index.to_period('M')
-    unique_months = df['YearMonth'].unique()
+    df["YearMonth"] = df.index.to_period("M")
+    unique_months = df["YearMonth"].unique()
 
     total_months = len(unique_months)
     min_required = train_months + test_months
 
     if total_months < min_required:
-        logger.warning(
-            f"Insufficient data: {total_months} months < {min_required} required"
-        )
+        logger.warning(f"Insufficient data: {total_months} months < {min_required} required")
         return {}
 
     periods_results: List[Dict[str, Any]] = []
@@ -421,8 +416,8 @@ def walk_forward_backtest(
         test_months_range = unique_months[train_end_idx:test_end_idx]
 
         # Filter data
-        train_mask = df['YearMonth'].isin(train_months_range)
-        test_mask = df['YearMonth'].isin(test_months_range)
+        train_mask = df["YearMonth"].isin(train_months_range)
+        test_mask = df["YearMonth"].isin(test_months_range)
 
         df[train_mask].copy()
         test_df = df[test_mask].copy()
@@ -440,17 +435,19 @@ def walk_forward_backtest(
             continue
 
         # Calculate metrics for this period
-        period_metrics = calculate_perf_metrics(bt_results['Equity_Strategy'])
+        period_metrics = calculate_perf_metrics(bt_results["Equity_Strategy"])
 
-        periods_results.append({
-            "train_start": str(train_months_range[0]),
-            "train_end": str(train_months_range[-1]),
-            "test_start": str(test_months_range[0]),
-            "test_end": str(test_months_range[-1]),
-            "metrics": period_metrics
-        })
+        periods_results.append(
+            {
+                "train_start": str(train_months_range[0]),
+                "train_end": str(train_months_range[-1]),
+                "test_start": str(test_months_range[0]),
+                "test_end": str(test_months_range[-1]),
+                "metrics": period_metrics,
+            }
+        )
 
-        all_oos_returns.append(bt_results['Strategy_Net_Return'])
+        all_oos_returns.append(bt_results["Strategy_Net_Return"])
 
         # Slide forward by test_months
         start_idx += test_months
@@ -464,9 +461,7 @@ def walk_forward_backtest(
     oos_equity = (1 + oos_returns).cumprod()
 
     # Calculate aggregate metrics
-    aggregate_metrics = calculate_perf_metrics(
-        oos_equity, include_bootstrap_ci=True
-    )
+    aggregate_metrics = calculate_perf_metrics(oos_equity, include_bootstrap_ci=True)
 
     logger.info(
         f"Walk-forward complete: {len(periods_results)} periods, "
@@ -477,6 +472,5 @@ def walk_forward_backtest(
         "summary": aggregate_metrics,
         "periods": periods_results,
         "oos_returns": oos_returns,
-        "n_periods": len(periods_results)
+        "n_periods": len(periods_results),
     }
-

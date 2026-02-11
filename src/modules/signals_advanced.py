@@ -26,10 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_bollinger_bands(
-    df: pd.DataFrame,
-    window: int = 20,
-    num_std: float = 2.0,
-    price_col: str = 'Close'
+    df: pd.DataFrame, window: int = 20, num_std: float = 2.0, price_col: str = "Close"
 ) -> pd.DataFrame:
     """
     Calculate Bollinger Bands for mean reversion signals.
@@ -50,16 +47,16 @@ def calculate_bollinger_bands(
     df = df.copy()
 
     # Calculate bands
-    df['BB_Middle'] = df[price_col].rolling(window=window).mean()
+    df["BB_Middle"] = df[price_col].rolling(window=window).mean()
     rolling_std = df[price_col].rolling(window=window).std()
-    df['BB_Upper'] = df['BB_Middle'] + (rolling_std * num_std)
-    df['BB_Lower'] = df['BB_Middle'] - (rolling_std * num_std)
+    df["BB_Upper"] = df["BB_Middle"] + (rolling_std * num_std)
+    df["BB_Lower"] = df["BB_Middle"] - (rolling_std * num_std)
 
     # Band width (volatility measure)
-    df['BB_Width'] = (df['BB_Upper'] - df['BB_Lower']) / df['BB_Middle']
+    df["BB_Width"] = (df["BB_Upper"] - df["BB_Lower"]) / df["BB_Middle"]
 
     # Price position within bands (-1 at lower, 0 at middle, +1 at upper)
-    df['BB_Position'] = (df[price_col] - df['BB_Middle']) / (df['BB_Upper'] - df['BB_Middle'])
+    df["BB_Position"] = (df[price_col] - df["BB_Middle"]) / (df["BB_Upper"] - df["BB_Middle"])
 
     logger.debug(f"Bollinger Bands calculated: window={window}, std={num_std}")
     return df
@@ -67,11 +64,11 @@ def calculate_bollinger_bands(
 
 def generate_mean_reversion_signal(
     df: pd.DataFrame,
-    rsi_col: str = 'RSI_14',
+    rsi_col: str = "RSI_14",
     oversold: int = 30,
     overbought: int = 70,
     use_bollinger: bool = True,
-    bb_position_col: str = 'BB_Position'
+    bb_position_col: str = "BB_Position",
 ) -> pd.Series:
     """
     Generate mean reversion signal based on RSI and optionally Bollinger Bands.
@@ -105,9 +102,9 @@ def generate_mean_reversion_signal(
     if use_bollinger and bb_position_col in df.columns:
         # Combine with Bollinger Band position
         bb_low = df[bb_position_col] < -0.8  # Near lower band
-        bb_high = df[bb_position_col] > 0.8   # Near upper band
+        bb_high = df[bb_position_col] > 0.8  # Near upper band
 
-        signal[rsi_oversold & bb_low] = 1    # Strong buy
+        signal[rsi_oversold & bb_low] = 1  # Strong buy
         signal[rsi_overbought & bb_high] = -1  # Strong sell
     else:
         # RSI only
@@ -120,9 +117,9 @@ def generate_mean_reversion_signal(
 
 def generate_volatility_breakout_signal(
     df: pd.DataFrame,
-    vol_col: str = 'Vol_21d',
+    vol_col: str = "Vol_21d",
     vol_threshold_percentile: float = 0.80,
-    trend_col: Optional[str] = None
+    trend_col: Optional[str] = None,
 ) -> pd.Series:
     """
     Generate volatility breakout signal.
@@ -153,8 +150,8 @@ def generate_volatility_breakout_signal(
     # Determine trend direction from recent returns if not provided
     if trend_col is None or trend_col not in df.columns:
         # Use 5-day return direction
-        df['_temp_trend'] = np.sign(df['Close'].pct_change(5))
-        trend = df['_temp_trend']
+        df["_temp_trend"] = np.sign(df["Close"].pct_change(5))
+        trend = df["_temp_trend"]
     else:
         trend = df[trend_col]
 
@@ -163,8 +160,8 @@ def generate_volatility_breakout_signal(
     signal[high_vol] = trend[high_vol]
 
     # Clean up
-    if '_temp_trend' in df.columns:
-        df.drop('_temp_trend', axis=1, inplace=True)
+    if "_temp_trend" in df.columns:
+        df.drop("_temp_trend", axis=1, inplace=True)
 
     logger.info(f"Volatility breakout signal: {(signal != 0).sum()} active days")
     return signal
@@ -172,9 +169,9 @@ def generate_volatility_breakout_signal(
 
 def generate_dual_momentum_signal(
     df: pd.DataFrame,
-    abs_mom_col: str = 'Momentum_12M_1M',
+    abs_mom_col: str = "Momentum_12M_1M",
     rel_benchmark_return: Optional[pd.Series] = None,
-    abs_threshold: float = 0.0
+    abs_threshold: float = 0.0,
 ) -> pd.Series:
     """
     Generate dual momentum signal (absolute + relative momentum).
@@ -211,15 +208,14 @@ def generate_dual_momentum_signal(
         signal = pd.Series(0, index=df.index)
         signal[abs_mom_positive] = 1
 
-    logger.info(f"Dual momentum signal: {(signal == 1).sum()} long days, {(signal == 0).sum()} cash days")
+    logger.info(
+        f"Dual momentum signal: {(signal == 1).sum()} long days, {(signal == 0).sum()} cash days"
+    )
     return signal
 
 
 def generate_composite_signal(
-    df: pd.DataFrame,
-    signals: dict,
-    weights: Optional[dict] = None,
-    threshold: float = 0.5
+    df: pd.DataFrame, signals: dict, weights: Optional[dict] = None, threshold: float = 0.5
 ) -> pd.Series:
     """
     Combine multiple signals into a composite signal.
@@ -263,10 +259,7 @@ def generate_composite_signal(
     return final_signal
 
 
-def calculate_atr(
-    df: pd.DataFrame,
-    window: int = 14
-) -> pd.Series:
+def calculate_atr(df: pd.DataFrame, window: int = 14) -> pd.Series:
     """
     Calculate Average True Range (ATR) for position sizing and stops.
 
@@ -277,13 +270,13 @@ def calculate_atr(
     Returns:
         Series with ATR values.
     """
-    if df.empty or not all(col in df.columns for col in ['High', 'Low', 'Close']):
+    if df.empty or not all(col in df.columns for col in ["High", "Low", "Close"]):
         logger.warning("Missing required columns for ATR calculation")
         return pd.Series(dtype=float, index=df.index if not df.empty else None)
 
-    high = df['High']
-    low = df['Low']
-    close = df['Close']
+    high = df["High"]
+    low = df["Low"]
+    close = df["Close"]
 
     # True Range
     tr1 = high - low
@@ -304,7 +297,7 @@ def calculate_position_size(
     risk_per_trade: float,
     atr: float,
     atr_multiplier: float = 2.0,
-    price: float = 1.0
+    price: float = 1.0,
 ) -> Tuple[int, float]:
     """
     Calculate position size based on ATR volatility.
