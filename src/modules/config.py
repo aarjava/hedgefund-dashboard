@@ -26,7 +26,7 @@ CACHE_TTL_SECONDS = 3600 * 24  # 24 hours
 
 # === Asset Universe ===
 PRESET_UNIVERSE = [
-    "SPY", "QQQ", "IWM", "GLD", "TLT", 
+    "SPY", "QQQ", "IWM", "GLD", "TLT",
     "XLK", "XLE", "BTC-USD", "ETH-USD"
 ]
 
