@@ -225,14 +225,16 @@ with tab_ov:
     # Interactive Price Chart
     fig = go.Figure()
     fig.add_trace(
-        go.Scatter(x=df.index, y=df["Close"], name="Close Price", line=dict(color="white", width=1))
+        go.Scatter(
+            x=df.index, y=df["Close"], name="Close Price", line={"color": "white", "width": 1}
+        )
     )
     fig.add_trace(
         go.Scatter(
             x=df.index,
             y=df[f"SMA_{sma_window}"],
             name=f"{sma_window}-Day SMA",
-            line=dict(color="#ff9f43", width=1),
+            line={"color": "#ff9f43", "width": 1},
         )
     )
 
@@ -248,7 +250,7 @@ with tab_ov:
             y=high_vol_pts["Close"],
             mode="markers",
             name="High Volatility",
-            marker=dict(color="red", size=2),
+            marker={"color": "red", "size": 2},
         )
     )
 
@@ -365,7 +367,7 @@ with tab_bt:
                 x=res_df.index,
                 y=res_df["Equity_Strategy"],
                 name="Trend Strategy",
-                line=dict(color="#00ff00"),
+                line={"color": "#00ff00"},
             )
         )
         fig_eq.add_trace(
@@ -373,7 +375,7 @@ with tab_bt:
                 x=res_df.index,
                 y=res_df["Equity_Benchmark"],
                 name="Buy & Hold",
-                line=dict(color="gray", dash="dot"),
+                line={"color": "gray", "dash": "dot"},
             )
         )
         fig_eq.update_layout(title="Equity Curve", template="plotly_dark", height=400)
@@ -388,7 +390,7 @@ with tab_bt:
                     y=res_df["DD_Strategy"] * 100,
                     name="Strategy Drawdown",
                     fill="tozeroy",
-                    line=dict(color="#ff4b4b"),
+                    line={"color": "#ff4b4b"},
                 )
             )
             fig_dd.add_trace(
@@ -396,7 +398,7 @@ with tab_bt:
                     x=res_df.index,
                     y=res_df["DD_Benchmark"] * 100,
                     name="Benchmark Drawdown",
-                    line=dict(color="gray", dash="dot"),
+                    line={"color": "gray", "dash": "dot"},
                 )
             )
             fig_dd.update_layout(
@@ -449,7 +451,7 @@ with tab_bt:
         # 5. Walk-Forward Validation (Advanced)
         with st.expander("🚀 Walk-Forward Validation (Advanced)", expanded=False):
             st.markdown("""
-            Walk-forward validation splits data into rolling train/test windows to evaluate 
+            Walk-forward validation splits data into rolling train/test windows to evaluate
             out-of-sample performance. This is more rigorous than a single full-sample backtest.
             """)
 
