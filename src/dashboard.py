@@ -118,12 +118,22 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
     
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05,
+        help="Percentile threshold (e.g., 0.8 = top 20%) to classify 'High Volatility' regimes."
     )
     
     st.subheader("5. Backtest Settings")
-    bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
-    allow_short = st.checkbox("Allow Short Selling?", value=False)
+    bt_cost = st.number_input(
+        "Transaction Cost (bps)",
+        value=DEFAULT_COST_BPS,
+        step=1,
+        help="Simulates execution drag per trade. 10 bps = 0.10%. Typical range: 5-20 bps."
+    ) / 10000
+    allow_short = st.checkbox(
+        "Allow Short Selling?",
+        value=False,
+        help="If checked, strategy will short sell when trend is negative. Otherwise, it moves to cash."
+    )
 
 
 # --- Data Ingestion ---
