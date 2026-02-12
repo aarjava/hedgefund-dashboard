@@ -17,7 +17,7 @@
 \maketitle
 
 \begin{abstract}
-This paper evaluates how a simple trend-following rule behaves across volatility regimes in U.S. equities. The baseline strategy is long when price is above its 50-day simple moving average and in cash otherwise, with monthly rebalancing and 10 basis points transaction costs. Volatility regimes are defined using annualized 21-day realized volatility and out-of-sample expanding-window quantiles (low: below 25th percentile, high: above 75th percentile). On SPY from 1993-01-29 to 2026-02-09, the trend strategy has lower unconditional return than buy-and-hold (CAGR 3.90\% vs. 8.75\%) but materially lower max drawdown (-36.46\% vs. -56.47\%). Regime-conditional results show strongest strategy performance in low-volatility periods and weaker relative performance in normal and high-volatility periods. A bootstrap test of high-minus-normal Sharpe difference yields 0.09 with p-value 0.808, indicating weak statistical evidence for a meaningful difference in this sample.
+This paper evaluates how a simple trend-following rule behaves across volatility regimes in U.S. equities. The baseline strategy is long when price is above its 50-day simple moving average and in cash otherwise, with monthly rebalancing and 10 basis points transaction costs. Volatility regimes are defined using annualized 21-day realized volatility and out-of-sample expanding-window quantiles (low: below 25th percentile, high: above 75th percentile). On SPY from 1993-04-12 to 2026-02-12, the trend strategy has lower unconditional return than buy-and-hold (CAGR 3.83\% vs. 8.68\%) but materially lower max drawdown (-36.46\% vs. -56.47\%). Regime-conditional results show strongest strategy performance in low-volatility periods and weaker relative performance in normal and high-volatility periods. A bootstrap test of high-minus-normal Sharpe difference yields 0.10 with p-value 0.794, indicating weak statistical evidence for a meaningful difference in this sample.
 \end{abstract}
 
 \section{Introduction}
@@ -27,7 +27,7 @@ The design is intentionally minimal to isolate the regime effect: a single trend
 
 \section{Data and Methodology}
 \subsection{Data}
-The primary instrument is SPY (S\&P 500 ETF). Robustness checks use QQQ and IWM. Daily OHLCV history is sourced from Yahoo Finance via \texttt{yfinance}. The SPY sample spans 1993-01-29 to 2026-02-09.
+The primary instrument is SPY (S\&P 500 ETF). Robustness checks use QQQ and IWM. Daily OHLCV history is sourced from Yahoo Finance via \texttt{yfinance}. The SPY analysis sample spans 1993-04-12 to 2026-02-12.
 
 \subsection{Signal and Regime Definitions}
 The baseline trading signal is
@@ -54,19 +54,19 @@ The backtest uses monthly rebalancing and 10 bps cost per unit position change. 
 \subsection{Unconditional Performance (SPY)}
 \begin{table}[H]
 \centering
-\caption{Unconditional performance, SPY (1993-01-29 to 2026-02-09)}
+\caption{Unconditional performance, SPY (1993-04-12 to 2026-02-12)}
 \begin{tabular}{lcc}
 \toprule
 Metric & Trend Strategy & Buy and Hold \\
 \midrule
-CAGR & 3.90\% & 8.75\% \\
-Sharpe & 0.327 & 0.468 \\
+CAGR & 3.83\% & 8.68\% \\
+Sharpe & 0.322 & 0.465 \\
 Max drawdown & -36.46\% & -56.47\% \\
 Volatility & 11.90\% & 18.68\% \\
-Sortino & 0.340 & 0.599 \\
-Calmar & 0.107 & 0.155 \\
-Win rate & 34.81\% & 53.68\% \\
-Sharpe CI (95\%) & [0.034, 0.775] & N/A \\
+Sortino & 0.334 & 0.595 \\
+Calmar & 0.105 & 0.154 \\
+Win rate & 34.80\% & 53.66\% \\
+Sharpe CI (95\%) & [-0.007, 0.725] & N/A \\
 \bottomrule
 \end{tabular}
 \label{tab:unconditional}
@@ -83,14 +83,14 @@ The trend strategy reduces downside depth but gives up significant long-run retu
 Regime & Avg vol & Strategy Sharpe & Benchmark Sharpe & Strategy CAGR & Benchmark CAGR & Count \\
 \midrule
 Low & 7.96\% & 1.548 & 1.739 & 12.62\% & 15.00\% & 1988 \\
-Normal & 13.60\% & 0.123 & 0.444 & 0.76\% & 5.38\% & 3777 \\
+Normal & 13.60\% & 0.111 & 0.433 & 0.62\% & 5.23\% & 3780 \\
 High & 26.00\% & 0.215 & 0.447 & 2.10\% & 9.07\% & 2469 \\
 \bottomrule
 \end{tabular}
 \label{tab:conditional}
 \end{table}
 
-The strategy underperforms buy-and-hold in high-volatility periods by roughly 9.55 percentage points annualized. The high-minus-normal Sharpe difference is 0.09 with p-value 0.808, providing weak evidence of regime Sharpe separation in this sample.
+The strategy underperforms buy-and-hold in high-volatility periods by roughly 6.97 percentage points annualized. The high-minus-normal Sharpe difference is 0.10 with p-value 0.794, providing weak evidence of regime Sharpe separation in this sample.
 
 \subsection{Transition, Walk-Forward, and Cross-Asset Robustness}
 Regime transitions are persistent (e.g., low-to-low 93.21\%, normal-to-normal 93.94\%, high-to-high 96.19\%). Walk-forward out-of-sample performance remains consistent with full-sample behavior (OOS CAGR 3.61\%, OOS Sharpe 0.325, OOS max drawdown -33.22\%; 61 test periods).
@@ -102,8 +102,8 @@ Regime transitions are persistent (e.g., low-to-low 93.21\%, normal-to-normal 93
 \toprule
 Asset & Trend CAGR & Trend Sharpe & Buy and Hold CAGR & Buy and Hold Sharpe \\
 \midrule
-QQQ & 7.40\% & 0.425 & 9.52\% & 0.354 \\
-IWM & 3.35\% & 0.212 & 6.78\% & 0.283 \\
+QQQ & 7.29\% & 0.419 & 9.42\% & 0.350 \\
+IWM & 3.23\% & 0.204 & 6.65\% & 0.278 \\
 \bottomrule
 \end{tabular}
 \label{tab:robustness}
