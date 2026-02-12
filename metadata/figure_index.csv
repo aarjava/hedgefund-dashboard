@@ -1,0 +1,8 @@
+filename,caption
+fig_equity_curves.png,SPY equity curves (log scale).
+fig_drawdowns.png,SPY drawdown curves.
+fig_regime_frequency.png,Regime frequency for SPY using OOS quantiles.
+fig_conditional_sharpe.png,Strategy vs benchmark Sharpe by volatility regime.
+fig_transition_matrix.png,Volatility regime transition probability matrix.
+fig_sma_sweep.png,SMA window robustness for regime Sharpe.
+fig_robustness_assets.png,Cross-asset robustness for CAGR and Sharpe (QQQ and IWM).

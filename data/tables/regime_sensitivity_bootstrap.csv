@@ -1,0 +1,5 @@
+,Metric,Value
+0,Sharpe_Diff_High_minus_Normal,0.103308
+1,CAGR_Diff_High_minus_Normal,0.014843
+2,Bootstrap_Diff,0.103308
+3,Bootstrap_PValue,0.794000

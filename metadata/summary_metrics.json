@@ -1,0 +1,32 @@
+{
+  "report_date": "2026-02-12",
+  "primary_asset": "SPY",
+  "robustness_assets": [
+    "QQQ",
+    "IWM"
+  ],
+  "sample_start": "1993-04-12",
+  "sample_end": "2026-02-12",
+  "signal": "Long when Close > SMA_50; else cash",
+  "vol_regime": {
+    "vol_window_days": 21,
+    "quantile_low": 0.25,
+    "quantile_high": 0.75,
+    "classification": "expanding-window out-of-sample quantiles"
+  },
+  "backtest": {
+    "rebalance": "M",
+    "transaction_cost_bps": 10,
+    "bootstrap_iterations": 500
+  },
+  "key_results": {
+    "trend_cagr": 0.03829750192487413,
+    "buyhold_cagr": 0.08680196096440085,
+    "trend_sharpe": 0.3218287193196395,
+    "buyhold_sharpe": 0.46462915335984684,
+    "trend_maxdd": -0.3645799603914891,
+    "buyhold_maxdd": -0.5647366917817168,
+    "high_minus_normal_sharpe_diff": 0.10330833079010748,
+    "high_minus_normal_sharpe_pvalue": 0.794
+  }
+}

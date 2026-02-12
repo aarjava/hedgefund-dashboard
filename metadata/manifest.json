@@ -1,0 +1,13 @@
+{
+  "project": "gemini_paper_repo",
+  "purpose": "Evidence package for drafting the volatility-regime trend-following paper",
+  "primary_manuscript": "manuscript/main.tex",
+  "bibliography": "manuscript/references.bib",
+  "figures_dir": "figures",
+  "tables_dir": "data/tables",
+  "timeseries_dir": "data/time_series",
+  "summary_file": "metadata/summary_metrics.json",
+  "figure_index": "metadata/figure_index.csv",
+  "data_dictionary": "metadata/data_dictionary.md",
+  "prompt_template": "GEMINI_PROMPT.md"
+}
