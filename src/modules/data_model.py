@@ -64,6 +64,67 @@ def fetch_stock_data(
         return pd.DataFrame()
 
 
+@st.cache_data(ttl=CACHE_TTL_SECONDS)
+def fetch_multi_asset_data(
+    tickers: tuple,
+    period: str = "10y",
+    interval: str = "1d"
+) -> dict:
+    """
+    Fetch historical data for multiple tickers.
+
+    Args:
+        tickers: Tuple of ticker symbols.
+        period: Time period string.
+        interval: Data interval.
+
+    Returns:
+        Dict mapping ticker -> DataFrame.
+    """
+    data = {}
+    for t in tickers:
+        df = fetch_stock_data(t, period=period, interval=interval)
+        data[t] = df
+    return data
+
+
+def align_close_prices(data: dict) -> pd.DataFrame:
+    """
+    Align close prices for multiple assets on a common date index.
+
+    Args:
+        data: Dict mapping ticker -> DataFrame with 'Close'.
+
+    Returns:
+        DataFrame of close prices with tickers as columns.
+    """
+    frames = []
+    for t, df in data.items():
+        if df is None or df.empty or 'Close' not in df.columns:
+            continue
+        s = df['Close'].rename(t)
+        frames.append(s)
+    if not frames:
+        return pd.DataFrame()
+    prices = pd.concat(frames, axis=1, join='inner').sort_index()
+    return prices.dropna(how='any')
+
+
+def align_volume(data: dict) -> pd.DataFrame:
+    """
+    Align volume for multiple assets on a common date index.
+    """
+    frames = []
+    for t, df in data.items():
+        if df is None or df.empty or 'Volume' not in df.columns:
+            continue
+        s = df['Volume'].rename(t)
+        frames.append(s)
+    if not frames:
+        return pd.DataFrame()
+    vol = pd.concat(frames, axis=1, join='inner').sort_index()
+    return vol.dropna(how='any')
+
 def validate_ticker(ticker: str) -> bool:
     """
     Validate if a ticker symbol exists and has data.
@@ -107,4 +168,3 @@ def get_ticker_info(ticker: str) -> Optional[dict]:
     except Exception as e:
         logger.debug(f"Could not get info for {ticker}: {e}")
         return None
-

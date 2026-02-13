@@ -132,6 +132,21 @@ class TestBacktester(unittest.TestCase):
         self.assertIn('Normal', stats.index)
         self.assertIn('Low', stats.index)
         self.assertIn('Sharpe', stats.columns)
+
+    def test_regime_stats(self):
+        """Test regime stats calculation with CAGR."""
+        df = pd.DataFrame({
+            'Return': np.random.randn(100) * 0.01,
+            'Vol_Regime': ['High'] * 50 + ['Normal'] * 50
+        })
+
+        stats = backtester.calculate_regime_stats(
+            df, 'Return', 'Vol_Regime'
+        )
+
+        self.assertIn('High', stats.index)
+        self.assertIn('Normal', stats.index)
+        self.assertIn('CAGR', stats.columns)
         
     def test_walk_forward_backtest(self):
         """Test walk-forward validation."""
@@ -175,4 +190,3 @@ class TestBacktester(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

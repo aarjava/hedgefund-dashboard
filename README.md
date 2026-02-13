@@ -4,7 +4,7 @@
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Tests](https://img.shields.io/badge/Tests-44%20Passing-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-51%20Passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/Coverage-85%25-yellow)
 
 ## 📊 Overview
@@ -40,6 +40,22 @@ Built for seamless interactivity, this application empowers researchers to move 
 *   **Drawdown Analysis**: Visualize underwater periods with duration metrics.
 *   **Signal Overlays**: Inspect specific trade entry/exit points directly on the price chart.
 *   **8+ Performance Metrics**: CAGR, Sharpe (with 95% CI), Sortino, Calmar, Max DD, DD Duration, Win Rate.
+
+### 5. Portfolio Analytics Suite
+*   **Multi-Asset Portfolio Mode**: Upload a CSV of tickers/weights or build from presets.
+*   **Risk Posture Score**: Volatility, drawdown, beta, and liquidity combined into a single score.
+*   **Factor Attribution**: Rolling OLS betas on ETF factor proxies with contributions.
+*   **Scenario Engine**: Macro shock sliders (rates, USD, oil, gold, vol) with impact estimates.
+*   **Alerts & Anomalies**: Rule-based alerts and z-score anomaly detection.
+*   **Client-Ready Reports**: Export deterministic Markdown/HTML summaries and CSV data.
+
+### 6. Regime Performance Lab (New)
+*   **Transition Matrix**: Regime-to-regime transition probabilities with heatmap.
+*   **Transition Impact**: Performance following regime switches (e.g., Normal→High).
+*   **Regime Sensitivity Score**: Sharpe/CAGR differences between High and Normal regimes.
+*   **Bootstrap Significance**: P-value for regime performance differences.
+*   **Robustness Sweep**: SMA window sweep to detect parameter fragility.
+*   **Portfolio Cross-Section**: Rank assets by regime sensitivity (resilient vs fragile).
 
 ## 🛠 Tech Stack
 
@@ -95,6 +111,16 @@ Built for seamless interactivity, this application empowers researchers to move 
 | **🌪️ Regime Analysis** | Deep dive into the distribution of market volatility. Visualize how often the market is in "High Stress" mode. |
 | **🧪 Backtest Engine** | The core research lab. Compare your configured strategy against the benchmark. Analyze conditional statistics. Includes walk-forward validation. |
 | **📄 Report** | Summary of findings and raw data export for further analysis in Jupyter/Excel. |
+
+**Portfolio Mode Tabs** (available when Mode = Portfolio):
+* **📈 Overview**: Portfolio equity curve, weights, quick query panel.
+* **🧪 Regime Lab**: Cross-section regime sensitivity and robustness checks.
+* **🛡️ Risk & Liquidity**: Risk posture, drawdowns, correlation matrix, liquidity stress.
+* **🧬 Attribution**: Rolling factor betas, factor contributions, alpha series.
+* **🧪 Scenario**: Macro shock sliders and portfolio impact.
+* **📡 Signals Health**: Signal decay and rolling IC on the benchmark.
+* **🚨 Alerts**: Threshold alerts and anomaly detection.
+* **📄 Report**: Client-ready report exports.
 
 ## 🔬 Methodology
 

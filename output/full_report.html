@@ -1,0 +1,397 @@
+<html><body>
+<h1>HedgeFund Dashboard Report</h1>
+<h2>Summary</h2>
+<ul>
+<li><strong>Report Date</strong>: 2026-02-09</li>
+<li><strong>Data Range (SPY)</strong>: 1993-01-29 to 2026-02-09</li>
+<li><strong>Strategy</strong>: Trend: Price > 50d SMA (Long/Cash)</li>
+<li><strong>Regime Model</strong>: 21d vol, OOS expanding quantiles (Low<25%, High>75%)</li>
+<li><strong>Rebalance</strong>: Monthly</li>
+<li><strong>Transaction Cost</strong>: 10 bps per trade</li>
+<li><strong>Unconditional Trend Sharpe</strong>: 0.33</li>
+<li><strong>Unconditional Buy&Hold Sharpe</strong>: 0.47</li>
+<li><strong>High-Normal Sharpe Diff (boot)</strong>: 0.09 (p=0.808)</li>
+<li><strong>Regime Sensitivity (Sharpe/CAGR)</strong>: 0.09 / 1.35%</li>
+</ul>
+<h2>Unconditional Performance (SPY)</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Trend Strategy</th>
+      <th>Buy &amp; Hold</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>CAGR</th>
+      <td>0.038960</td>
+      <td>0.087508</td>
+    </tr>
+    <tr>
+      <th>Sharpe</th>
+      <td>0.327416</td>
+      <td>0.468370</td>
+    </tr>
+    <tr>
+      <th>MaxDD</th>
+      <td>-0.364580</td>
+      <td>-0.564737</td>
+    </tr>
+    <tr>
+      <th>Vol</th>
+      <td>0.118992</td>
+      <td>0.186834</td>
+    </tr>
+    <tr>
+      <th>Sortino</th>
+      <td>0.339864</td>
+      <td>0.599472</td>
+    </tr>
+    <tr>
+      <th>Calmar</th>
+      <td>0.106862</td>
+      <td>0.154953</td>
+    </tr>
+    <tr>
+      <th>WinRate</th>
+      <td>0.348136</td>
+      <td>0.536786</td>
+    </tr>
+    <tr>
+      <th>Sharpe_CI_Lower</th>
+      <td>0.033662</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Sharpe_CI_Upper</th>
+      <td>0.775104</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Conditional Performance by Regime (SPY)</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Avg_Vol_Ann</th>
+      <th>Strategy_Sharpe</th>
+      <th>Benchmark_Sharpe</th>
+      <th>Strategy_CAGR</th>
+      <th>Benchmark_CAGR</th>
+      <th>Strategy_WinRate</th>
+      <th>Count</th>
+    </tr>
+    <tr>
+      <th>Regime</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Low</th>
+      <td>0.079613</td>
+      <td>1.547877</td>
+      <td>1.739093</td>
+      <td>0.126177</td>
+      <td>0.150048</td>
+      <td>0.506539</td>
+      <td>1988</td>
+    </tr>
+    <tr>
+      <th>Normal</th>
+      <td>0.136023</td>
+      <td>0.123377</td>
+      <td>0.443517</td>
+      <td>0.007589</td>
+      <td>0.053800</td>
+      <td>0.355573</td>
+      <td>3777</td>
+    </tr>
+    <tr>
+      <th>High</th>
+      <td>0.260031</td>
+      <td>0.214697</td>
+      <td>0.447398</td>
+      <td>0.021041</td>
+      <td>0.090741</td>
+      <td>0.213447</td>
+      <td>2469</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Regime Frequency (SPY)</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Frequency</th>
+    </tr>
+    <tr>
+      <th>Vol_Regime</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Low</th>
+      <td>0.240532</td>
+    </tr>
+    <tr>
+      <th>Normal</th>
+      <td>0.456987</td>
+    </tr>
+    <tr>
+      <th>High</th>
+      <td>0.298730</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Regime Transition Matrix (SPY)</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Vol_Regime</th>
+      <th>Low</th>
+      <th>Normal</th>
+      <th>High</th>
+    </tr>
+    <tr>
+      <th>Vol_Regime</th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Low</th>
+      <td>0.932093</td>
+      <td>0.067907</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>Normal</th>
+      <td>0.035752</td>
+      <td>0.939354</td>
+      <td>0.024894</td>
+    </tr>
+    <tr>
+      <th>High</th>
+      <td>0.000000</td>
+      <td>0.038072</td>
+      <td>0.961928</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Regime Transition Performance (Strategy)</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Mean</th>
+      <th>Sharpe</th>
+      <th>WinRate</th>
+      <th>CAGR</th>
+      <th>Count</th>
+    </tr>
+    <tr>
+      <th>Transition</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>High→High</th>
+      <td>0.059860</td>
+      <td>0.416962</td>
+      <td>0.213895</td>
+      <td>0.050769</td>
+      <td>2375</td>
+    </tr>
+    <tr>
+      <th>High→Normal</th>
+      <td>0.126041</td>
+      <td>1.838559</td>
+      <td>0.223404</td>
+      <td>0.131661</td>
+      <td>94</td>
+    </tr>
+    <tr>
+      <th>Low→Low</th>
+      <td>0.116524</td>
+      <td>1.459230</td>
+      <td>0.508904</td>
+      <td>0.119979</td>
+      <td>1853</td>
+    </tr>
+    <tr>
+      <th>Low→Normal</th>
+      <td>-1.075868</td>
+      <td>-5.093651</td>
+      <td>0.333333</td>
+      <td>-0.667316</td>
+      <td>135</td>
+    </tr>
+    <tr>
+      <th>Normal→High</th>
+      <td>-0.674644</td>
+      <td>-2.813219</td>
+      <td>0.202128</td>
+      <td>-0.505549</td>
+      <td>94</td>
+    </tr>
+    <tr>
+      <th>Normal→Low</th>
+      <td>0.196591</td>
+      <td>3.145768</td>
+      <td>0.474074</td>
+      <td>0.214800</td>
+      <td>135</td>
+    </tr>
+    <tr>
+      <th>Normal→Normal</th>
+      <td>0.052745</td>
+      <td>0.478695</td>
+      <td>0.360023</td>
+      <td>0.047766</td>
+      <td>3547</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Walk-Forward OOS Summary</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>OOS_CAGR</th>
+      <th>OOS_Sharpe</th>
+      <th>OOS_MaxDD</th>
+      <th>OOS_Vol</th>
+      <th>OOS_WinRate</th>
+      <th>Periods</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.036068</td>
+      <td>0.325053</td>
+      <td>-0.332233</td>
+      <td>0.110962</td>
+      <td>0.298541</td>
+      <td>61</td>
+    </tr>
+  </tbody>
+</table>
+<h2>SMA Sweep (Sharpe by Regime)</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Regime</th>
+      <th>High</th>
+      <th>Low</th>
+      <th>Normal</th>
+      <th>Unknown</th>
+    </tr>
+    <tr>
+      <th>SMA</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>20</th>
+      <td>0.001834</td>
+      <td>1.284601</td>
+      <td>0.353059</td>
+      <td>-3.403936</td>
+    </tr>
+    <tr>
+      <th>50</th>
+      <td>0.055695</td>
+      <td>1.568870</td>
+      <td>0.280786</td>
+      <td>-2.301368</td>
+    </tr>
+    <tr>
+      <th>100</th>
+      <td>0.031359</td>
+      <td>1.879660</td>
+      <td>0.224355</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>150</th>
+      <td>0.165790</td>
+      <td>1.834964</td>
+      <td>0.254314</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>200</th>
+      <td>0.087567</td>
+      <td>1.804784</td>
+      <td>0.567160</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Robustness Across Assets (Unconditional)</h2>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Trend_CAGR</th>
+      <th>Trend_Sharpe</th>
+      <th>Trend_MaxDD</th>
+      <th>BuyHold_CAGR</th>
+      <th>BuyHold_Sharpe</th>
+      <th>BuyHold_MaxDD</th>
+    </tr>
+    <tr>
+      <th>Asset</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>QQQ</th>
+      <td>0.073973</td>
+      <td>0.425136</td>
+      <td>-0.394074</td>
+      <td>0.095240</td>
+      <td>0.353557</td>
+      <td>-0.829639</td>
+    </tr>
+    <tr>
+      <th>IWM</th>
+      <td>0.033500</td>
+      <td>0.212069</td>
+      <td>-0.420807</td>
+      <td>0.067788</td>
+      <td>0.283055</td>
+      <td>-0.594935</td>
+    </tr>
+  </tbody>
+</table>
+</body></html>

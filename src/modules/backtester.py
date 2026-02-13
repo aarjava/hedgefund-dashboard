@@ -355,6 +355,50 @@ def calculate_conditional_stats(
     return pd.DataFrame(results).set_index("Regime")
 
 
+def calculate_regime_stats(
+    df: pd.DataFrame,
+    return_col: str,
+    regime_col: str
+) -> pd.DataFrame:
+    """
+    Calculate regime stats with CAGR and Sharpe per regime.
+    """
+    if df.empty or regime_col not in df.columns:
+        logger.warning(f"Invalid input for regime stats: missing '{regime_col}'")
+        return pd.DataFrame()
+
+    regimes = df[regime_col].unique()
+    results = []
+
+    for reg in regimes:
+        subset = df[df[regime_col] == reg][return_col].dropna()
+        if subset.empty:
+            continue
+
+        ann_return = subset.mean() * TRADING_DAYS_PER_YEAR
+        vol = subset.std() * (TRADING_DAYS_PER_YEAR ** 0.5)
+        sharpe = ann_return / vol if vol != 0 else 0
+        win_rate = (subset > 0).mean()
+
+        years = max(len(subset) / TRADING_DAYS_PER_YEAR, 1e-6)
+        cagr = (1 + subset).prod() ** (1 / years) - 1
+
+        results.append({
+            "Regime": reg,
+            "Ann_Return": ann_return,
+            "Volatility": vol,
+            "Sharpe": sharpe,
+            "WinRate": win_rate,
+            "CAGR": cagr,
+            "Count": len(subset),
+        })
+
+    if not results:
+        return pd.DataFrame()
+
+    return pd.DataFrame(results).set_index("Regime")
+
+
 def walk_forward_backtest(
     df: pd.DataFrame,
     signal_col: str,
@@ -478,4 +522,3 @@ def walk_forward_backtest(
         "oos_returns": oos_returns,
         "n_periods": len(periods_results)
     }
-

@@ -17,9 +17,37 @@ DEFAULT_RSI_WINDOW = 14
 DEFAULT_VOL_QUANTILE_HIGH = 0.75
 DEFAULT_VOL_QUANTILE_LOW = 0.25
 
+# === Regime Lab Defaults ===
+DEFAULT_BOOTSTRAP_ITER = 500
+DEFAULT_SMA_SWEEP = [20, 50, 100, 150, 200]
+
 # === Backtest Defaults ===
 DEFAULT_COST_BPS = 10  # In basis points (10 bps = 0.10%)
 DEFAULT_REBALANCE_FREQ = 'M'  # Monthly
+
+# === Portfolio Defaults ===
+DEFAULT_BENCHMARK = "SPY"
+DEFAULT_PORTFOLIO_VALUE = 1_000_000
+DEFAULT_ADV_PCT = 0.10  # 10% of ADV for liquidation estimate
+
+# === Factor & Macro Proxies (Yahoo Finance tickers) ===
+FACTOR_PROXIES = {
+    "Market": "SPY",
+    "Momentum": "MTUM",
+    "Value": "IWD",
+    "Growth": "IWF",
+    "Quality": "QUAL",
+    "LowVol": "USMV",
+    "Size": "IWM",
+}
+
+MACRO_PROXIES = {
+    "Rates": "TLT",
+    "USD": "UUP",
+    "Vol": "^VIX",
+    "Gold": "GLD",
+    "Oil": "USO",
+}
 
 # === Caching ===
 CACHE_TTL_SECONDS = 3600 * 24  # 24 hours

@@ -1,0 +1,174 @@
+\pdfoutput=1
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage[numbers]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\title{Volatility Regimes and Trend-Following Performance in U.S. Equities}
+\author{Aarjav Ametha}
+\date{February 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This paper evaluates how a simple trend-following rule behaves across volatility regimes in U.S. equities. The baseline strategy is long when price is above its 50-day simple moving average and in cash otherwise, with monthly rebalancing and 10 basis points transaction costs. Volatility regimes are defined using annualized 21-day realized volatility and out-of-sample expanding-window quantiles (low: below 25th percentile, high: above 75th percentile). On SPY from 1993-04-12 to 2026-02-12, the trend strategy has lower unconditional return than buy-and-hold (CAGR 3.83\% vs. 8.68\%) but materially lower max drawdown (-36.46\% vs. -56.47\%). Regime-conditional results show strongest strategy performance in low-volatility periods and weaker relative performance in normal and high-volatility periods. A bootstrap test of high-minus-normal Sharpe difference yields 0.10 with p-value 0.794, indicating weak statistical evidence for a meaningful difference in this sample.
+\end{abstract}
+
+\section{Introduction}
+A standard claim in trend-following is that performance varies materially by market state, with the strongest behavior often tied to persistent directional moves and weaker behavior in choppy transitions. This paper studies the following question: \emph{How sensitive is trend-following performance to volatility regimes in U.S. equities?}
+
+The design is intentionally minimal to isolate the regime effect: a single trend rule, explicit friction assumptions, and out-of-sample regime classification. The setup is motivated by prior momentum and trend literature \citep{jegadeesh1993returns,moskowitz2012time,antonacci2014dual}.
+
+\section{Data and Methodology}
+\subsection{Data}
+The primary instrument is SPY (S\&P 500 ETF). Robustness checks use QQQ and IWM. Daily OHLCV history is sourced from Yahoo Finance via \texttt{yfinance}. The SPY analysis sample spans 1993-04-12 to 2026-02-12.
+
+\subsection{Signal and Regime Definitions}
+The baseline trading signal is
+\begin{equation}
+\text{Signal}_t = \mathbb{1}\{P_t > \text{SMA}_{50,t}\}.
+\end{equation}
+The position at time $t$ uses lagged signal information consistent with end-of-period execution.
+
+Realized volatility is computed as annualized 21-day rolling standard deviation of daily returns:
+\begin{equation}
+\sigma_t = \sqrt{252}\,\text{Std}(r_{t-20:t}).
+\end{equation}
+Regimes are assigned using expanding-window quantiles to avoid look-ahead bias:
+\begin{itemize}
+\item Low volatility: $\sigma_t < Q_{0.25,t}$
+\item Normal volatility: $Q_{0.25,t} \leq \sigma_t \leq Q_{0.75,t}$
+\item High volatility: $\sigma_t > Q_{0.75,t}$
+\end{itemize}
+
+\subsection{Backtest Protocol}
+The backtest uses monthly rebalancing and 10 bps cost per unit position change. Performance is reported via CAGR, annualized volatility, Sharpe, Sortino, Calmar, win rate, and max drawdown. Regime-conditional performance is computed separately by volatility state. A walk-forward procedure uses 24-month train and 6-month test windows (61 out-of-sample periods). Statistical significance is assessed with 500 bootstrap resamples for high-vs-normal Sharpe differences.
+
+\section{Results}
+\subsection{Unconditional Performance (SPY)}
+\begin{table}[H]
+\centering
+\caption{Unconditional performance, SPY (1993-04-12 to 2026-02-12)}
+\begin{tabular}{lcc}
+\toprule
+Metric & Trend Strategy & Buy and Hold \\
+\midrule
+CAGR & 3.83\% & 8.68\% \\
+Sharpe & 0.322 & 0.465 \\
+Max drawdown & -36.46\% & -56.47\% \\
+Volatility & 11.90\% & 18.68\% \\
+Sortino & 0.334 & 0.595 \\
+Calmar & 0.105 & 0.154 \\
+Win rate & 34.80\% & 53.66\% \\
+Sharpe CI (95\%) & [-0.007, 0.725] & N/A \\
+\bottomrule
+\end{tabular}
+\label{tab:unconditional}
+\end{table}
+
+The trend strategy reduces downside depth but gives up significant long-run return versus passive exposure.
+
+\subsection{Conditional Performance by Volatility Regime}
+\begin{table}[H]
+\centering
+\caption{Regime-conditional performance, SPY}
+\begin{tabular}{lcccccc}
+\toprule
+Regime & Avg vol & Strategy Sharpe & Benchmark Sharpe & Strategy CAGR & Benchmark CAGR & Count \\
+\midrule
+Low & 7.96\% & 1.548 & 1.739 & 12.62\% & 15.00\% & 1988 \\
+Normal & 13.60\% & 0.111 & 0.433 & 0.62\% & 5.23\% & 3780 \\
+High & 26.00\% & 0.215 & 0.447 & 2.10\% & 9.07\% & 2469 \\
+\bottomrule
+\end{tabular}
+\label{tab:conditional}
+\end{table}
+
+The strategy underperforms buy-and-hold in high-volatility periods by roughly 6.97 percentage points annualized. The high-minus-normal Sharpe difference is 0.10 with p-value 0.794, providing weak evidence of regime Sharpe separation in this sample.
+
+\subsection{Transition, Walk-Forward, and Cross-Asset Robustness}
+Regime transitions are persistent (e.g., low-to-low 93.21\%, normal-to-normal 93.94\%, high-to-high 96.19\%). Walk-forward out-of-sample performance remains consistent with full-sample behavior (OOS CAGR 3.61\%, OOS Sharpe 0.325, OOS max drawdown -33.22\%; 61 test periods).
+
+\begin{table}[H]
+\centering
+\caption{Cross-asset robustness (unconditional)}
+\begin{tabular}{lcccc}
+\toprule
+Asset & Trend CAGR & Trend Sharpe & Buy and Hold CAGR & Buy and Hold Sharpe \\
+\midrule
+QQQ & 7.29\% & 0.419 & 9.42\% & 0.350 \\
+IWM & 3.23\% & 0.204 & 6.65\% & 0.278 \\
+\bottomrule
+\end{tabular}
+\label{tab:robustness}
+\end{table}
+
+A parameter sweep of SMA windows (20, 50, 100, 150, 200) shows low-volatility Sharpe is consistently stronger than high-volatility Sharpe.
+
+\section{Figures}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/fig_equity_curves.png}
+\caption{SPY equity curves (log scale).}
+\label{fig:equity}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/fig_drawdowns.png}
+\caption{SPY drawdown curves.}
+\label{fig:drawdown}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{figures/fig_regime_frequency.png}
+\caption{Regime frequency under out-of-sample quantile classification.}
+\label{fig:freq}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\linewidth]{figures/fig_conditional_sharpe.png}
+\caption{Strategy and benchmark Sharpe by volatility regime.}
+\label{fig:conditional_sharpe}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.70\linewidth]{figures/fig_transition_matrix.png}
+\caption{Volatility regime transition matrix.}
+\label{fig:transition}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.84\linewidth]{figures/fig_sma_sweep.png}
+\caption{SMA parameter sweep: regime Sharpe sensitivity.}
+\label{fig:sma_sweep}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/fig_robustness_assets.png}
+\caption{Cross-asset robustness for CAGR and Sharpe (QQQ, IWM).}
+\label{fig:robust_assets}
+\end{figure}
+
+\section{Limitations}
+The analysis focuses on three liquid ETFs and one simple signal family. Data quality depends on Yahoo Finance history and may omit effects tied to delistings or implementation microstructure. The strategy is long/cash only and does not include leverage, position sizing, or risk targeting. Bootstrap inference is non-parametric but still sample-dependent.
+
+\section{Conclusion}
+In this sample, the 50-day trend-following rule is volatility-state dependent. It reduces drawdown magnitude versus buy-and-hold but does not deliver superior unconditional return. Relative performance is strongest in low-volatility states and weaker in normal and high-volatility states. Out-of-sample walk-forward results are directionally consistent with full-sample findings.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,23 @@
+\begin{thebibliography}{3}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Antonacci(2014)]{antonacci2014dual}
+Gary Antonacci.
+\newblock \emph{Dual Momentum Investing: An Innovative Strategy for Higher Returns with Lower Risk}.
+\newblock McGraw-Hill, 2014.
+
+\bibitem[Jegadeesh and Titman(1993)]{jegadeesh1993returns}
+Narasimhan Jegadeesh and Sheridan Titman.
+\newblock Returns to buying winners and selling losers: Implications for stock market efficiency.
+\newblock \emph{The Journal of Finance}, 48\penalty0 (1):\penalty0 65--91, 1993.
+
+\bibitem[Moskowitz et~al.(2012)Moskowitz, Ooi, and Pedersen]{moskowitz2012time}
+Tobias~J. Moskowitz, Yao~Hua Ooi, and Lasse~Heje Pedersen.
+\newblock Time series momentum.
+\newblock \emph{Journal of Financial Economics}, 104\penalty0 (2):\penalty0 228--250, 2012.
+
+\end{thebibliography}
