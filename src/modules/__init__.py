@@ -1,3 +1,1 @@
-# HedgeFund Dashboard - Core Modules
-from . import data_model, signals, signals_advanced, backtester, config
-
+from . import backtester, config, data_model, signals, signals_advanced  # noqa: F401
