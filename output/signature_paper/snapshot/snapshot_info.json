@@ -1,0 +1,11 @@
+{
+  "snapshot_refresh": false,
+  "spy_raw_start": "1993-01-29",
+  "spy_raw_end": "2026-02-13",
+  "spy_analysis_start": "1993-04-12",
+  "spy_analysis_end": "2026-02-13",
+  "signal": "Price > SMA50 (long/cash)",
+  "regime": "21d annualized volatility, OOS expanding quantiles",
+  "cost_bps": 10,
+  "rebalance": "M"
+}

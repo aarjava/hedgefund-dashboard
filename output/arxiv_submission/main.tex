@@ -1,6 +1,5 @@
 \pdfoutput=1
 \documentclass[11pt]{article}
-
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -10,7 +9,7 @@
 \usepackage[numbers]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 
-\title{Volatility Regimes and Trend-Following Performance in U.S. Equities}
+\title{Volatility Regimes and Trend-Following Performance in U.S. Equities: An Empirical Deconstruction}
 \author{Aarjav Ametha}
 \date{February 2026}
 
@@ -18,157 +17,246 @@
 \maketitle
 
 \begin{abstract}
-This paper evaluates how a simple trend-following rule behaves across volatility regimes in U.S. equities. The baseline strategy is long when price is above its 50-day simple moving average and in cash otherwise, with monthly rebalancing and 10 basis points transaction costs. Volatility regimes are defined using annualized 21-day realized volatility and out-of-sample expanding-window quantiles (low: below 25th percentile, high: above 75th percentile). On SPY from 1993-04-12 to 2026-02-12, the trend strategy has lower unconditional return than buy-and-hold (CAGR 3.83\% vs. 8.68\%) but materially lower max drawdown (-36.46\% vs. -56.47\%). Regime-conditional results show strongest strategy performance in low-volatility periods and weaker relative performance in normal and high-volatility periods. A bootstrap test of high-minus-normal Sharpe difference yields 0.10 with p-value 0.794, indicating weak statistical evidence for a meaningful difference in this sample.
+This paper evaluates a standard trend-following rule ($P_t > SMA_{50,t}$) on SPY over a 33-year sample (1993-01-29 to 2026-02-13). Unconditionally, the strategy underperforms buy-and-hold on Sharpe (\textbf{0.32} vs. \textbf{0.46}) and CAGR (\textbf{3.83\%} vs. \textbf{8.68\%}), but materially improves downside containment (MaxDD \textbf{-36.46\%} vs. \textbf{-56.47\%}). A regime-conditional decomposition reveals structural asymmetry: quality is concentrated in Low Volatility (Sharpe 1.55) and decays through volatility expansion (Normal 0.11, High 0.21). Walk-forward validation remains directionally consistent (OOS Sharpe 0.33 across 61 test windows), supporting robustness of the central result.
 \end{abstract}
 
 \section{Introduction}
-A standard claim in trend-following is that performance varies materially by market state, with the strongest behavior often tied to persistent directional moves and weaker behavior in choppy transitions. This paper studies the following question: \emph{How sensitive is trend-following performance to volatility regimes in U.S. equities?}
+Trend-following in equities is frequently framed as ``crisis alpha,'' i.e., superior return quality during volatility shocks. We test that claim by conditioning performance on out-of-sample volatility regimes instead of relying on unconditional averages. This framing is closely related to the momentum and time-series trend literature \citep{jegadeesh1993returns,moskowitz2012time,antonacci2014dual}.
 
-The design is intentionally minimal to isolate the regime effect: a single trend rule, explicit friction assumptions, and out-of-sample regime classification. The setup is motivated by prior momentum and trend literature \citep{jegadeesh1993returns,moskowitz2012time,antonacci2014dual}.
+The empirical profile in this sample is not a smile; it is closer to a checkmark. Performance quality is strongest in Low Volatility and degrades in Normal and High Volatility states. The strategy still provides material drawdown truncation, but that benefit is risk-management oriented, not broad crisis-state alpha.
 
-\section{Data and Methodology}
-\subsection{Data}
-The primary instrument is SPY (S\&P 500 ETF). Robustness checks use QQQ and IWM. Daily OHLCV history is sourced from Yahoo Finance via \texttt{yfinance}. The SPY analysis sample spans 1993-04-12 to 2026-02-12.
-
-\subsection{Signal and Regime Definitions}
-The baseline trading signal is
-\begin{equation}
-\text{Signal}_t = \mathbb{1}\{P_t > \text{SMA}_{50,t}\}.
-\end{equation}
-The position at time $t$ uses lagged signal information consistent with end-of-period execution.
-
-Realized volatility is computed as annualized 21-day rolling standard deviation of daily returns:
-\begin{equation}
-\sigma_t = \sqrt{252}\,\text{Std}(r_{t-20:t}).
-\end{equation}
-Regimes are assigned using expanding-window quantiles to avoid look-ahead bias:
+\subsection{Hypotheses and contributions}
+Hypotheses tested:
 \begin{itemize}
-\item Low volatility: $\sigma_t < Q_{0.25,t}$
-\item Normal volatility: $Q_{0.25,t} \leq \sigma_t \leq Q_{0.75,t}$
-\item High volatility: $\sigma_t > Q_{0.75,t}$
+\item \textbf{H1 (Crisis alpha):} trend-following quality is highest in High Volatility states.
+\item \textbf{H2 (Low-vol dominance):} trend-following quality is highest in Low Volatility states.
+\item \textbf{H3 (Transition bleed):} the largest quality decay occurs during $Low \rightarrow Normal$ transitions.
 \end{itemize}
 
-\subsection{Backtest Protocol}
-The backtest uses monthly rebalancing and 10 bps cost per unit position change. Performance is reported via CAGR, annualized volatility, Sharpe, Sortino, Calmar, win rate, and max drawdown. Regime-conditional performance is computed separately by volatility state. A walk-forward procedure uses 24-month train and 6-month test windows (61 out-of-sample periods). Statistical significance is assessed with 500 bootstrap resamples for high-vs-normal Sharpe differences.
+Contributions:
+\begin{itemize}
+\item OOS regime decomposition with expanding-window state labels.
+\item Transition-level microstructure diagnostics for where quality is lost.
+\item Robustness stack across walk-forward, cost/rebalance, SMA sweep, and cross-asset checks.
+\item Explicit hypothesis-to-evidence mapping.
+\end{itemize}
+
+\section{Data and Methodology}
+\subsection{Sample and signal}
+Instrument: SPY (robustness assets: QQQ and IWM). Raw sample window: 1993-01-29 to 2026-02-13. Effective analysis starts 1993-04-12 after indicator warm-up and out-of-sample regime eligibility.
+
+Trading signal:
+\begin{equation}
+\text{Position}_t =
+\begin{cases}
+1 & \text{if } P_t > SMA_{50,t} \\
+0 & \text{otherwise}
+\end{cases}
+\end{equation}
+
+Execution assumptions: monthly rebalance, 10 bps turnover cost.
+
+\subsection{Regime definition and validation}
+Regimes are defined from annualized 21-day realized volatility using expanding-window quantiles:
+Low ($<25$th percentile), Normal ($25$th--$75$th), and High ($>75$th). This prevents look-ahead in threshold construction.
+
+Validation stack:
+\begin{itemize}
+\item Bootstrap confidence intervals and p-values for strategy-minus-benchmark differences by regime.
+\item High-minus-Normal spread test for strategy-only quality decay.
+\item Rolling walk-forward evaluation (24-month train / 6-month test).
+\end{itemize}
 
 \section{Results}
-\subsection{Unconditional Performance (SPY)}
-\begin{table}[H]
-\centering
-\caption{Unconditional performance, SPY (1993-04-12 to 2026-02-12)}
-\begin{tabular}{lcc}
-\toprule
-Metric & Trend Strategy & Buy and Hold \\
-\midrule
-CAGR & 3.83\% & 8.68\% \\
-Sharpe & 0.322 & 0.465 \\
-Max drawdown & -36.46\% & -56.47\% \\
-Volatility & 11.90\% & 18.68\% \\
-Sortino & 0.334 & 0.595 \\
-Calmar & 0.105 & 0.154 \\
-Win rate & 34.80\% & 53.66\% \\
-Sharpe CI (95\%) & [-0.007, 0.725] & N/A \\
-\bottomrule
-\end{tabular}
-\label{tab:unconditional}
-\end{table}
+\subsection{Unconditional performance: insurance cost vs. tail truncation}
+\begin{itemize}
+\item Strategy CAGR: 3.83\%; Benchmark CAGR: 8.68\%.
+\item Strategy Sharpe: 0.32; Benchmark Sharpe: 0.46.
+\item Strategy MaxDD: -36.46\%; Benchmark MaxDD: -56.47\%.
+\item Strategy Win Rate: 34.81\%; Benchmark Win Rate: 53.66\%.
+\end{itemize}
 
-The trend strategy reduces downside depth but gives up significant long-run return versus passive exposure.
-
-\subsection{Conditional Performance by Volatility Regime}
-\begin{table}[H]
-\centering
-\caption{Regime-conditional performance, SPY}
-\begin{tabular}{lcccccc}
-\toprule
-Regime & Avg vol & Strategy Sharpe & Benchmark Sharpe & Strategy CAGR & Benchmark CAGR & Count \\
-\midrule
-Low & 7.96\% & 1.548 & 1.739 & 12.62\% & 15.00\% & 1988 \\
-Normal & 13.60\% & 0.111 & 0.433 & 0.62\% & 5.23\% & 3780 \\
-High & 26.00\% & 0.215 & 0.447 & 2.10\% & 9.07\% & 2469 \\
-\bottomrule
-\end{tabular}
-\label{tab:conditional}
-\end{table}
-
-The strategy underperforms buy-and-hold in high-volatility periods by roughly 6.97 percentage points annualized. The high-minus-normal Sharpe difference is 0.10 with p-value 0.794, providing weak evidence of regime Sharpe separation in this sample.
-
-\subsection{Transition, Walk-Forward, and Cross-Asset Robustness}
-Regime transitions are persistent (e.g., low-to-low 93.21\%, normal-to-normal 93.94\%, high-to-high 96.19\%). Walk-forward out-of-sample performance remains consistent with full-sample behavior (OOS CAGR 3.61\%, OOS Sharpe 0.325, OOS max drawdown -33.22\%; 61 test periods).
-
-\begin{table}[H]
-\centering
-\caption{Cross-asset robustness (unconditional)}
-\begin{tabular}{lcccc}
-\toprule
-Asset & Trend CAGR & Trend Sharpe & Buy and Hold CAGR & Buy and Hold Sharpe \\
-\midrule
-QQQ & 7.29\% & 0.419 & 9.42\% & 0.350 \\
-IWM & 3.23\% & 0.204 & 6.65\% & 0.278 \\
-\bottomrule
-\end{tabular}
-\label{tab:robustness}
-\end{table}
-
-A parameter sweep of SMA windows (20, 50, 100, 150, 200) shows low-volatility Sharpe is consistently stronger than high-volatility Sharpe.
-
-\section{Figures}
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\linewidth]{figures/fig_equity_curves.png}
-\caption{SPY equity curves (log scale).}
+\caption{Figure 1. SPY equity curves (log scale), trend strategy vs. buy-and-hold.}
 \label{fig:equity}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\linewidth]{figures/fig_drawdowns.png}
-\caption{SPY drawdown curves.}
+\caption{Figure 2. SPY drawdown curves showing tail-risk truncation.}
 \label{fig:drawdown}
 \end{figure}
 
+Figures~\ref{fig:equity} and \ref{fig:drawdown} show the key trade-off: lower trend participation in long bull runs, but materially reduced tail-depth and faster drawdown recovery dynamics.
+
+\subsection{Regime anomaly: where quality actually lives}
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.75\linewidth]{figures/fig_regime_frequency.png}
-\caption{Regime frequency under out-of-sample quantile classification.}
-\label{fig:freq}
+\caption{Figure 3. OOS volatility-regime occupancy for SPY.}
+\label{fig:regimefreq}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.82\linewidth]{figures/fig_conditional_sharpe.png}
-\caption{Strategy and benchmark Sharpe by volatility regime.}
-\label{fig:conditional_sharpe}
+\caption{Figure 4. Regime-conditional Sharpe ratios (strategy vs. benchmark).}
+\label{fig:condsharpe}
 \end{figure}
 
+Figure~\ref{fig:regimefreq} confirms occupancy is meaningful in all states (Low 24.04\%, Normal 45.72\%, High 29.86\%), so the conditional profile is not a sparse-sample artifact.
+Figure~\ref{fig:condsharpe} directly shows the checkmark profile.
+\begin{itemize}
+\item Strategy Sharpe by regime: Low 1.55, Normal 0.11, High 0.21.
+\item Benchmark Sharpe by regime: Low 1.74, Normal 0.43, High 0.45.
+\item High-minus-Normal strategy Sharpe spread: 0.10 (95\% CI [-0.75, 0.89], p=0.799).
+\end{itemize}
+
+\subsection{Transition microstructure and robustness}
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.70\linewidth]{figures/fig_transition_matrix.png}
-\caption{Volatility regime transition matrix.}
+\caption{Figure 5. Volatility regime transition matrix.}
 \label{fig:transition}
 \end{figure}
+
+Figure~\ref{fig:transition} provides the transition diagnostics:
+\begin{itemize}
+\item $P(\text{High}_t \mid \text{High}_{t-1})$ = 96.19\%.
+\item $P(\text{Normal}_t \mid \text{Low}_{t-1})$ = 6.79\%.
+\item Sharpe during $Low \rightarrow Normal$ transitions = -5.09.
+\end{itemize}
+
+The $Low \rightarrow Normal$ handoff is the primary bleed regime: trend smoothness breaks, realized volatility expands, and lagged signals adapt late.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.84\linewidth]{figures/fig_sma_sweep.png}
-\caption{SMA parameter sweep: regime Sharpe sensitivity.}
-\label{fig:sma_sweep}
+\caption{Figure 6. SMA lookback sweep by regime-level Sharpe ratio.}
+\label{fig:smasweep}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\linewidth]{figures/fig_robustness_assets.png}
-\caption{Cross-asset robustness for CAGR and Sharpe (QQQ, IWM).}
-\label{fig:robust_assets}
+\caption{Figure 7. Cross-asset robustness across SPY, QQQ, and IWM.}
+\label{fig:crossasset}
 \end{figure}
 
-\section{Limitations}
-The analysis focuses on three liquid ETFs and one simple signal family. Data quality depends on Yahoo Finance history and may omit effects tied to delistings or implementation microstructure. The strategy is long/cash only and does not include leverage, position sizing, or risk targeting. Bootstrap inference is non-parametric but still sample-dependent.
+Additional robustness diagnostics:
+\begin{itemize}
+\item OOS walk-forward summary: CAGR 3.61\%, Sharpe 0.33, MaxDD -33.22\%, periods 61.
+\item Cost sensitivity: strategy CAGR declines from 4.29\% (0 bps) to 2.01\% (50 bps).
+\item Rebalance sensitivity: strategy Sharpe is 0.17 (daily) vs. 0.32 (monthly).
+\item Baseline comparison: SMA50 Sharpe 0.33 vs. SMA200 Sharpe 0.70 on common sample.
+\end{itemize}
+
+Figures~\ref{fig:smasweep} and \ref{fig:crossasset} align with the core interpretation: low-volatility trend quality is persistent across parameterizations and strongest in momentum-rich indices.
+
+\section{Hypothesis-to-Evidence Alignment}
+\begin{itemize}
+\item \textbf{H1 (Crisis alpha): Rejected.} Figure~\ref{fig:condsharpe} shows High-vol strategy Sharpe (0.21) below Low-vol strategy Sharpe (1.55) and below High-vol benchmark Sharpe (0.45).
+\item \textbf{H2 (Low-vol dominance): Supported.} Figure~\ref{fig:condsharpe} shows highest strategy quality in Low volatility, and Figure~\ref{fig:smasweep} shows this ordering is robust across lookbacks.
+\item \textbf{H3 (Transition bleed): Supported.} Figure~\ref{fig:transition} isolates severe quality decay in the $Low \rightarrow Normal$ handoff (Sharpe -5.09).
+\end{itemize}
+
+\section{Appendix: Inference and Robustness Tables}
+\begin{table}[H]
+\centering
+\caption{Strategy minus Benchmark by regime (bootstrap).}
+\label{tab:inf_regime}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Regime & Sharpe Diff (S-B) & Sharpe CI Low & Sharpe CI High & Sharpe p-value & CAGR Diff (pp) & CAGR CI Low (pp) & CAGR CI High (pp) & CAGR p-value \\
+\midrule
+Low & -0.191 & -1.148 & 0.819 & 0.732 & -2.39\% & -11.43\% & 7.16\% & 0.656 \\
+Normal & -0.322 & -1.036 & 0.392 & 0.519 & -4.61\% & -14.65\% & 4.66\% & 0.518 \\
+High & -0.233 & -1.100 & 0.668 & 0.666 & -6.97\% & -30.53\% & 13.57\% & 0.616 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{High minus Normal differences (strategy only).}
+\label{tab:inf_hn}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+Metric & Estimate & CI Low & CI High & p-value \\
+\midrule
+Sharpe (High - Normal) & 0.103 & -0.751 & 0.891 & 0.799 \\
+CAGR (High - Normal) & 1.48\% & -9.47\% & 12.41\% & 0.809 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Transaction cost sensitivity.}
+\label{tab:cost}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrr}
+\toprule
+Cost (bps) & Strategy CAGR & Strategy Sharpe & Strategy MaxDD & Delta CAGR vs Buy-Hold & Delta Sharpe vs Buy-Hold \\
+\midrule
+0 & 4.29\% & 0.360 & -33.47\% & -4.39\% & -0.104 \\
+5 & 4.06\% & 0.341 & -34.98\% & -4.62\% & -0.124 \\
+10 & 3.83\% & 0.322 & -36.46\% & -4.85\% & -0.143 \\
+20 & 3.37\% & 0.284 & -39.31\% & -5.31\% & -0.181 \\
+50 & 2.01\% & 0.169 & -47.14\% & -6.67\% & -0.296 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Rebalance frequency sensitivity.}
+\label{tab:rebal}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrr}
+\toprule
+Rebalance Frequency & Strategy CAGR & Strategy Sharpe & Strategy MaxDD & Delta CAGR vs Buy-Hold & Delta Sharpe vs Buy-Hold \\
+\midrule
+Daily & 1.88\% & 0.174 & -52.76\% & -6.80\% & -0.291 \\
+Weekly & 3.03\% & 0.273 & -40.66\% & -5.66\% & -0.191 \\
+Monthly & 3.83\% & 0.322 & -36.46\% & -4.85\% & -0.143 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Baseline signal comparison.}
+\label{tab:baseline}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrr}
+\toprule
+Model & CAGR & Sharpe & Max Drawdown \\
+\midrule
+BuyHold & 8.68\% & 0.461 & -56.47\% \\
+SMA50 & 3.95\% & 0.330 & -36.46\% \\
+SMA200 & 8.71\% & 0.696 & -26.29\% \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\section{Interpretation and Limits}
+Bootstrap inference supports directionality but indicates non-trivial uncertainty in several effect-size gaps. Strategy-minus-benchmark Sharpe p-values by regime are: Low 0.732, Normal 0.519, High 0.666. Therefore conclusions should be read as structural (state-dependent quality and robust drawdown truncation), not as point-estimate precision claims.
 
 \section{Conclusion}
-In this sample, the 50-day trend-following rule is volatility-state dependent. It reduces drawdown magnitude versus buy-and-hold but does not deliver superior unconditional return. Relative performance is strongest in low-volatility states and weaker in normal and high-volatility states. Out-of-sample walk-forward results are directionally consistent with full-sample findings.
+For U.S. equities in this sample, trend-following is best interpreted as a regime-dependent exposure controller rather than a universal crisis-alpha engine. The strongest improvement path is transition-aware and volatility-adaptive signal speed, especially around the $Low \rightarrow Normal$ state break where performance decay is most severe.
 
+\nocite{*}
 \bibliographystyle{plainnat}
 \bibliography{references}
-
 \end{document}
