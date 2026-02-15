@@ -21,9 +21,9 @@ This paper evaluates a standard trend-following rule ($P_t > SMA_{50,t}$) on SPY
 \end{abstract}
 
 \section{Introduction}
-Trend-following in equities is frequently framed as ``crisis alpha,'' i.e., superior return quality during volatility shocks. We test that claim by conditioning performance on out-of-sample volatility regimes instead of relying on unconditional averages. This framing is closely related to the momentum and time-series trend literature \citep{jegadeesh1993returns,moskowitz2012time,antonacci2014dual}.
+Trend-following in equities is frequently framed as ``crisis alpha,'' i.e., superior return quality during volatility shocks. We test that claim by conditioning performance on out-of-sample volatility regimes instead of relying on unconditional averages. The framing is consistent with prior evidence on moving-average rules and trend-following across assets \citep{brock1992simple,moskowitz2012time,hurst2017century} as well as broader momentum evidence in equities \citep{jegadeesh1993returns}.
 
-The empirical profile in this sample is not a smile; it is closer to a checkmark. Performance quality is strongest in Low Volatility and degrades in Normal and High Volatility states. The strategy still provides material drawdown truncation, but that benefit is risk-management oriented, not broad crisis-state alpha.
+The empirical profile in this sample is not a smile; it is closer to a checkmark. Performance quality is strongest in Low Volatility and degrades in Normal and High Volatility states. The strategy still provides material drawdown truncation, but that benefit is risk-management oriented, not broad crisis-state alpha; practitioner treatments also emphasize this allocation lens \citep{antonacci2014dual}.
 
 \subsection{Hypotheses and contributions}
 Hypotheses tested:
@@ -256,7 +256,6 @@ Bootstrap inference supports directionality but indicates non-trivial uncertaint
 \section{Conclusion}
 For U.S. equities in this sample, trend-following is best interpreted as a regime-dependent exposure controller rather than a universal crisis-alpha engine. The strongest improvement path is transition-aware and volatility-adaptive signal speed, especially around the $Low \rightarrow Normal$ state break where performance decay is most severe.
 
-\nocite{*}
 \bibliographystyle{plainnat}
 \bibliography{references}
 \end{document}
