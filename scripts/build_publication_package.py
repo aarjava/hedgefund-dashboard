@@ -10,6 +10,7 @@ import argparse
 import json
 import shutil
 import subprocess
+import tarfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -1307,6 +1308,105 @@ def sync_figures(canonical_figures: Path, targets: list[Path]) -> None:
             shutil.copy2(f, t / f.name)
 
 
+def write_arxiv_submission_notes(arxiv_dir: Path) -> None:
+    readme = """# arXiv Submission Package
+
+This directory contains a source-ready arXiv package.
+
+## Included in the clean tarball
+- `main.tex` (primary manuscript)
+- `main.bbl` (resolved bibliography)
+- `references.bib` (source bibliography)
+- `figures/fig_*.png` (all referenced figures)
+- `README_ARXIV.md`
+- `ARXIV_METADATA.md`
+
+## arXiv compiler settings
+- Compiler: `pdfLaTeX`
+- Main file: `main.tex`
+
+## Local compile command
+```bash
+pdflatex main.tex
+bibtex main
+pdflatex main.tex
+pdflatex main.tex
+```
+"""
+
+    metadata = """# Suggested arXiv Metadata
+
+## Title
+Volatility Regimes and Trend-Following Performance in U.S. Equities: An Empirical Deconstruction
+
+## Author
+Aarjav Ametha
+
+## Abstract
+This paper evaluates a standard trend-following rule (`Price > 50-day SMA`) on SPY over a 33-year sample. Unconditionally, the strategy underperforms buy-and-hold on return quality but materially reduces drawdown depth. A regime-conditional decomposition shows a clear state asymmetry: performance quality is concentrated in Low Volatility environments and degrades during volatility expansion, with the sharpest decay around the Low->Normal transition. Walk-forward, parameter sweep, transaction-cost, rebalance-frequency, and cross-asset tests support the robustness of the structural result. For broad U.S. equities, trend-following behaves more like a regime-dependent risk-allocation overlay than a universal crisis-alpha engine.
+
+## Suggested Categories
+- Primary: `q-fin.PM`
+- Secondary: `q-fin.ST`
+
+## Keywords
+- trend following
+- volatility regimes
+- tactical asset allocation
+- drawdown management
+- moving averages
+"""
+
+    (arxiv_dir / "README_ARXIV.md").write_text(readme)
+    (arxiv_dir / "ARXIV_METADATA.md").write_text(metadata)
+
+
+def validate_arxiv_sources(arxiv_dir: Path) -> None:
+    tex_path = arxiv_dir / "main.tex"
+    if not tex_path.exists():
+        raise FileNotFoundError(f"Missing {tex_path}")
+
+    content = tex_path.read_text()
+    missing = []
+    for line in content.splitlines():
+        if "\\includegraphics" in line and "{" in line and "}" in line:
+            rel = line.split("{")[-1].split("}")[0]
+            p = arxiv_dir / rel
+            if not p.exists():
+                missing.append(rel)
+    if missing:
+        raise FileNotFoundError(f"Missing referenced figure(s): {missing}")
+
+    for required in ["main.tex", "main.bbl", "references.bib"]:
+        if not (arxiv_dir / required).exists():
+            raise FileNotFoundError(f"Missing required arXiv source: {required}")
+
+
+def build_clean_arxiv_tarball(arxiv_dir: Path, tar_path: Path) -> None:
+    tar_path.parent.mkdir(parents=True, exist_ok=True)
+    if tar_path.exists():
+        tar_path.unlink()
+
+    members = [
+        "main.tex",
+        "main.bbl",
+        "references.bib",
+        "README_ARXIV.md",
+        "ARXIV_METADATA.md",
+    ]
+    fig_dir = arxiv_dir / "figures"
+    fig_members = sorted([Path("figures") / p.name for p in fig_dir.glob("fig_*.png")])
+
+    with tarfile.open(tar_path, "w:gz") as tf:
+        for m in members:
+            p = arxiv_dir / m
+            if p.exists():
+                tf.add(p, arcname=str(Path("arxiv_submission") / m))
+        for m in fig_members:
+            p = arxiv_dir / m
+            tf.add(p, arcname=str(Path("arxiv_submission") / m))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--refresh", action="store_true", help="Refresh market data snapshot from yfinance")
@@ -1381,6 +1481,7 @@ def main() -> None:
         ref.write_text(
             """@article{jegadeesh1993returns,title={Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency},author={Jegadeesh, Narasimhan and Titman, Sheridan},journal={The Journal of Finance},volume={48},number={1},pages={65--91},year={1993}}\n\n@article{moskowitz2012time,title={Time Series Momentum},author={Moskowitz, Tobias J. and Ooi, Yao Hua and Pedersen, Lasse Heje},journal={Journal of Financial Economics},volume={104},number={2},pages={228--250},year={2012}}\n\n@book{antonacci2014dual,title={Dual Momentum Investing: An Innovative Strategy for Higher Returns with Lower Risk},author={Antonacci, Gary},publisher={McGraw-Hill},year={2014}}\n"""
         )
+    write_arxiv_submission_notes(arxiv_dir)
 
     # Sync figures everywhere used
     sync_figures(
@@ -1410,7 +1511,8 @@ def main() -> None:
         ],
         check=True,
     )
-    subprocess.run(["zsh", "-ic", f"cd {REPO / 'output'} && tar -czf arxiv_submission.tar.gz arxiv_submission"], check=True)
+    validate_arxiv_sources(arxiv_dir)
+    build_clean_arxiv_tarball(arxiv_dir, REPO / "output" / "arxiv_submission.tar.gz")
 
     print(f"Canonical paper: {canonical_md}")
     print(f"Live markdown: {live_md}")
