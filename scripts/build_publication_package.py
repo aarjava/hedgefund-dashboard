@@ -1067,9 +1067,9 @@ This paper evaluates a standard trend-following rule ($P_t > SMA_{{50,t}}$) on S
 \\end{{abstract}}
 
 \\section{{Introduction}}
-Trend-following in equities is frequently framed as ``crisis alpha,'' i.e., superior return quality during volatility shocks. We test that claim by conditioning performance on out-of-sample volatility regimes instead of relying on unconditional averages. This framing is closely related to the momentum and time-series trend literature \\citep{{jegadeesh1993returns,moskowitz2012time,antonacci2014dual}}.
+Trend-following in equities is frequently framed as ``crisis alpha,'' i.e., superior return quality during volatility shocks. We test that claim by conditioning performance on out-of-sample volatility regimes instead of relying on unconditional averages. The framing is consistent with prior evidence on moving-average rules and trend-following across assets \\citep{{brock1992simple,moskowitz2012time,hurst2017century}} as well as broader momentum evidence in equities \\citep{{jegadeesh1993returns}}.
 
-The empirical profile in this sample is not a smile; it is closer to a checkmark. Performance quality is strongest in Low Volatility and degrades in Normal and High Volatility states. The strategy still provides material drawdown truncation, but that benefit is risk-management oriented, not broad crisis-state alpha.
+The empirical profile in this sample is not a smile; it is closer to a checkmark. Performance quality is strongest in Low Volatility and degrades in Normal and High Volatility states. The strategy still provides material drawdown truncation, but that benefit is risk-management oriented, not broad crisis-state alpha; practitioner treatments also emphasize this allocation lens \\citep{{antonacci2014dual}}.
 
 \\subsection{{Hypotheses and contributions}}
 Hypotheses tested:
@@ -1226,7 +1226,6 @@ Bootstrap inference supports directionality but indicates non-trivial uncertaint
 \\section{{Conclusion}}
 For U.S. equities in this sample, trend-following is best interpreted as a regime-dependent exposure controller rather than a universal crisis-alpha engine. The strongest improvement path is transition-aware and volatility-adaptive signal speed, especially around the $Low \\rightarrow Normal$ state break where performance decay is most severe.
 
-\\nocite{{*}}
 \\bibliographystyle{{plainnat}}
 \\bibliography{{references}}
 \\end{{document}}
@@ -1475,12 +1474,61 @@ def main() -> None:
     arxiv_dir.mkdir(parents=True, exist_ok=True)
     write_arxiv_tex(spy, qqq, iwm, inf_tables, rb_tables, arxiv_dir / "main.tex", snapshot_info)
 
-    # Keep references file in arxiv dir if missing
+    # Keep references file in arxiv dir (overwrite for deterministic, research-grade cites)
     ref = arxiv_dir / "references.bib"
-    if not ref.exists():
-        ref.write_text(
-            """@article{jegadeesh1993returns,title={Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency},author={Jegadeesh, Narasimhan and Titman, Sheridan},journal={The Journal of Finance},volume={48},number={1},pages={65--91},year={1993}}\n\n@article{moskowitz2012time,title={Time Series Momentum},author={Moskowitz, Tobias J. and Ooi, Yao Hua and Pedersen, Lasse Heje},journal={Journal of Financial Economics},volume={104},number={2},pages={228--250},year={2012}}\n\n@book{antonacci2014dual,title={Dual Momentum Investing: An Innovative Strategy for Higher Returns with Lower Risk},author={Antonacci, Gary},publisher={McGraw-Hill},year={2014}}\n"""
-        )
+    ref.write_text(
+        """@article{brock1992simple,
+  title={Simple Technical Trading Rules and the Stochastic Properties of Stock Returns},
+  author={Brock, William and Lakonishok, Josef and LeBaron, Blake},
+  journal={The Journal of Finance},
+  volume={47},
+  number={5},
+  pages={1731--1764},
+  year={1992},
+  doi={10.1111/j.1540-6261.1992.tb04681.x}
+}
+
+@article{jegadeesh1993returns,
+  title={Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency},
+  author={Jegadeesh, Narasimhan and Titman, Sheridan},
+  journal={The Journal of Finance},
+  volume={48},
+  number={1},
+  pages={65--91},
+  year={1993},
+  doi={10.1111/j.1540-6261.1993.tb04702.x}
+}
+
+@article{moskowitz2012time,
+  title={Time Series Momentum},
+  author={Moskowitz, Tobias J. and Ooi, Yao Hua and Pedersen, Lasse Heje},
+  journal={Journal of Financial Economics},
+  volume={104},
+  number={2},
+  pages={228--250},
+  year={2012},
+  doi={10.1016/j.jfineco.2011.11.003}
+}
+
+@article{hurst2017century,
+  title={A Century of Evidence on Trend-Following Investing},
+  author={Hurst, Brian and Ooi, Yao Hua and Pedersen, Lasse Heje},
+  journal={The Journal of Portfolio Management},
+  volume={44},
+  number={1},
+  pages={15--29},
+  year={2017},
+  doi={10.3905/jpm.2017.44.1.015}
+}
+
+@book{antonacci2014dual,
+  title={Dual Momentum Investing: An Innovative Strategy for Higher Returns with Lower Risk},
+  author={Antonacci, Gary},
+  publisher={McGraw-Hill},
+  year={2014}
+}
+"""
+    )
     write_arxiv_submission_notes(arxiv_dir)
 
     # Sync figures everywhere used
