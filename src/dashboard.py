@@ -168,9 +168,18 @@ with st.sidebar:
             help="Lookback months for Momentum signal."
         )
     else:
-        factor_window = st.slider("Factor Beta Window (days)", 20, 252, 63, 7)
-        vol_window = st.slider("Regime Vol Window (days)", 10, 60, 21, 5)
-        adv_pct = st.slider("ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01)
+        factor_window = st.slider(
+            "Factor Beta Window (days)", 20, 252, 63, 7,
+            help="Lookback window (days) for rolling factor beta calculation."
+        )
+        vol_window = st.slider(
+            "Regime Vol Window (days)", 10, 60, 21, 5,
+            help="Lookback window (days) for realized volatility calculation."
+        )
+        adv_pct = st.slider(
+            "ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01,
+            help="Assumed participation rate in daily volume (e.g., 0.10 = 10% of ADV) for liquidity estimates."
+        )
 
     st.markdown("---")
     st.subheader("4. Research Rigor")
@@ -185,7 +194,8 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
 
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05,
+        help="Percentile threshold for 'High Volatility' regime (e.g., 0.80 = top 20% of volatility history)."
     )
 
     if mode == "Single-Asset":
@@ -194,10 +204,22 @@ with st.sidebar:
         allow_short = st.checkbox("Allow Short Selling?", value=False)
     else:
         st.subheader("5. Alert Thresholds")
-        dd_alert = st.slider("Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05)
-        vol_alert = st.slider("Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05)
-        beta_alert = st.slider("Beta Alert", 0.5, 2.0, 1.3, 0.1)
-        dttl_alert = st.slider("Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0)
+        dd_alert = st.slider(
+            "Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05,
+            help="Trigger alert if portfolio drawdown exceeds this level."
+        )
+        vol_alert = st.slider(
+            "Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05,
+            help="Trigger alert if annualized portfolio volatility exceeds this level."
+        )
+        beta_alert = st.slider(
+            "Beta Alert", 0.5, 2.0, 1.3, 0.1,
+            help="Trigger alert if portfolio beta to benchmark exceeds this level."
+        )
+        dttl_alert = st.slider(
+            "Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0,
+            help="Trigger alert if estimated days-to-liquidate (at ADV %) exceeds this level."
+        )
 
 
 # --- Portfolio Mode ---
