@@ -2,10 +2,10 @@
 Portfolio construction and analytics utilities.
 """
 
-from typing import Iterable, Dict
-import pandas as pd
-import numpy as np
 import logging
+from typing import Iterable
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -88,8 +88,10 @@ def build_portfolio(price_df: pd.DataFrame, weights: pd.Series) -> pd.DataFrame:
 
     port_rets = compute_portfolio_returns(price_df, weights)
     equity = (1 + port_rets).cumprod()
-    out = pd.DataFrame({
-        "Portfolio_Return": port_rets,
-        "Portfolio_Equity": equity,
-    })
+    out = pd.DataFrame(
+        {
+            "Portfolio_Return": port_rets,
+            "Portfolio_Equity": equity,
+        }
+    )
     return out

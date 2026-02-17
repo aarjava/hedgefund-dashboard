@@ -2,10 +2,11 @@
 Risk analytics utilities.
 """
 
-from typing import Dict, Tuple
+import logging
+from typing import Dict
+
 import numpy as np
 import pandas as pd
-import logging
 
 logger = logging.getLogger(__name__)
 
