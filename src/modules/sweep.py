@@ -3,11 +3,11 @@ Parameter sweep utilities for robustness checks.
 """
 
 from typing import Iterable
-import pandas as pd
-import numpy as np
 
-from . import signals
-from . import backtester
+import numpy as np
+import pandas as pd
+
+from . import backtester, signals
 
 
 def run_sma_regime_sweep(
@@ -30,8 +30,8 @@ def run_sma_regime_sweep(
     if "Daily_Return" not in base.columns:
         base["Daily_Return"] = base["Close"].pct_change()
 
-    base[f"Vol_{vol_window}d"] = (
-        base["Daily_Return"].rolling(window=vol_window).std() * np.sqrt(252)
+    base[f"Vol_{vol_window}d"] = base["Daily_Return"].rolling(window=vol_window).std() * np.sqrt(
+        252
     )
 
     base = signals.detect_volatility_regime(
@@ -54,20 +54,20 @@ def run_sma_regime_sweep(
         # Simple strategy returns
         temp["Strategy_Net_Return"] = temp["Signal_Trend"].shift(1).fillna(0) * temp["Daily_Return"]
 
-        stats = backtester.calculate_regime_stats(
-            temp, "Strategy_Net_Return", "Vol_Regime"
-        )
+        stats = backtester.calculate_regime_stats(temp, "Strategy_Net_Return", "Vol_Regime")
 
         if stats.empty:
             continue
 
         for reg, row in stats.iterrows():
-            rows.append({
-                "SMA": sma,
-                "Regime": reg,
-                "Sharpe": row.get("Sharpe", np.nan),
-                "CAGR": row.get("CAGR", np.nan),
-            })
+            rows.append(
+                {
+                    "SMA": sma,
+                    "Regime": reg,
+                    "Sharpe": row.get("Sharpe", np.nan),
+                    "CAGR": row.get("CAGR", np.nan),
+                }
+            )
 
     if not rows:
         return pd.DataFrame()

@@ -1,17 +1,17 @@
 # HedgeFund Dashboard - Core Modules
-from . import (
-    data_model,
-    signals,
-    signals_advanced,
+from . import (  # noqa: F401
+    alerts,
     backtester,
     config,
-    portfolio,
-    risk,
+    data_model,
     factors,
-    scenario,
     liquidity,
-    alerts,
-    reporting,
+    portfolio,
     regime_analysis,
+    reporting,
+    risk,
+    scenario,
+    signals,
+    signals_advanced,
     sweep,
 )

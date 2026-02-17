@@ -3,6 +3,7 @@ Report generation utilities (rules-based).
 """
 
 from typing import Dict
+
 import pandas as pd
 
 
@@ -31,7 +32,9 @@ def _df_to_markdown(df: pd.DataFrame, max_rows: int = 10) -> str:
     return "\n".join(md)
 
 
-def build_report_payload(summary: Dict[str, str], tables: Dict[str, pd.DataFrame]) -> Dict[str, str]:
+def build_report_payload(
+    summary: Dict[str, str], tables: Dict[str, pd.DataFrame]
+) -> Dict[str, str]:
     """
     Build Markdown and HTML report payloads.
 
