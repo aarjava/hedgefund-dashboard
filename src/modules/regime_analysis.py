@@ -3,9 +3,9 @@ Regime transition and sensitivity analytics.
 """
 
 from typing import Dict
+
 import numpy as np
 import pandas as pd
-
 
 DEFAULT_REGIME_ORDER = ["Low", "Normal", "High", "Unknown"]
 
