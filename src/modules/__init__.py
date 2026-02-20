@@ -1,5 +1,5 @@
 # HedgeFund Dashboard - Core Modules
-from . import (
+from . import (  # noqa: F401
     alerts,
     backtester,
     config,
