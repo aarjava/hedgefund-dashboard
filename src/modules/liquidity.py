@@ -2,9 +2,8 @@
 Liquidity analytics utilities.
 """
 
-from typing import Dict
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def compute_liquidity_metrics(

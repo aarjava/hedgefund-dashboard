@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -11,8 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yfinance as yf
-
-import sys
 
 REPO = Path("/Users/aarjavametha/Desktop/Projects/hedgefund-dashboard")
 sys.path.insert(0, str(REPO))
@@ -25,9 +24,9 @@ from src.modules.config import (  # noqa: E402
     DEFAULT_REBALANCE_FREQ,
     DEFAULT_SMA_SWEEP,
     DEFAULT_SMA_WINDOW,
-    DEFAULT_VOLATILITY_WINDOW,
     DEFAULT_VOL_QUANTILE_HIGH,
     DEFAULT_VOL_QUANTILE_LOW,
+    DEFAULT_VOLATILITY_WINDOW,
 )
 
 
@@ -313,7 +312,7 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     bench = [spy.bench_regime.loc[r, "Sharpe"] for r in regs]
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    for i, r in enumerate(regs):
+    for i, _r in enumerate(regs):
         ax.plot(
             [bench[i], strat[i]], [y[i], y[i]], color=PALETTE["grid"], lw=5, solid_capstyle="round"
         )
@@ -474,8 +473,8 @@ def write_paper(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, md_path
 
     text = f"""# Volatility Regimes and Trend-Following Performance in U.S. Equities: A Visual Deconstruction
 
-**Author:** Aarjav Ametha  
-**Date:** February 2026  
+**Author:** Aarjav Ametha
+**Date:** February 2026
 **Repository:** [github.com/aarjava/hedgefund-dashboard](https://github.com/aarjava/hedgefund-dashboard)
 
 ## Abstract
@@ -493,19 +492,19 @@ The baseline trade-off is visible immediately: strategy CAGR `{pct(sm.get('CAGR'
 ## 2. Wealth Path Decomposition
 ![Figure 1: SPY Equity Curves (Log Scale)](output/figures/fig_equity_curves.png)
 
-*Figure 1: SPY Equity Curves (Log Scale).*  
+*Figure 1: SPY Equity Curves (Log Scale).*
 The strategy decouples from major crash legs, but loses compounding speed during prolonged bull phases due to lagged re-entry after corrections.
 
 ## 3. Left-Tail Geometry and Recovery Burden
 ![Figure 2: SPY Drawdown Curves](output/figures/fig_drawdowns.png)
 
-*Figure 2: SPY Drawdown Curves.*  
+*Figure 2: SPY Drawdown Curves.*
 Risk control is the dominant contribution. The strategy's lower depth and shorter severe underwater episodes improve survivability for leverage-constrained or drawdown-sensitive mandates.
 
 ## 4. State Occupancy Matters
 ![Figure 3: Regime Frequency (SPY, OOS)](output/figures/fig_regime_frequency.png)
 
-*Figure 3: Regime Frequency (SPY, OOS).*  
+*Figure 3: Regime Frequency (SPY, OOS).*
 Regime frequency determines where performance can realistically accumulate. Strong behavior in an infrequent regime cannot drive headline return alone.
 
 ## 5. Regime Asymmetry (Where the Signal Works)
