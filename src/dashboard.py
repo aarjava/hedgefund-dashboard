@@ -1,74 +1,76 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
-from datetime import datetime, timedelta
 import hashlib
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
 # Import custom modules
 try:
     from modules import (
-        data_model,
-        signals,
-        backtester,
-        portfolio,
-        risk,
-        factors,
-        scenario,
-        liquidity,
         alerts,
-        reporting,
+        backtester,
+        data_model,
+        factors,
+        liquidity,
+        portfolio,
         regime_analysis,
+        reporting,
+        risk,
+        scenario,
+        signals,
         sweep,
     )
     from modules.config import (
-        PRESET_UNIVERSE,
-        DEFAULT_SMA_WINDOW,
-        DEFAULT_MOMENTUM_WINDOW,
-        DEFAULT_VOL_QUANTILE_HIGH,
-        DEFAULT_COST_BPS,
-        MIN_DATA_POINTS,
-        DEFAULT_BENCHMARK,
-        DEFAULT_PORTFOLIO_VALUE,
         DEFAULT_ADV_PCT,
+        DEFAULT_BENCHMARK,
+        DEFAULT_BOOTSTRAP_ITER,
+        DEFAULT_COST_BPS,
+        DEFAULT_MOMENTUM_WINDOW,
+        DEFAULT_PORTFOLIO_VALUE,
+        DEFAULT_SMA_SWEEP,
+        DEFAULT_SMA_WINDOW,
+        DEFAULT_VOL_QUANTILE_HIGH,
         FACTOR_PROXIES,
         MACRO_PROXIES,
-        DEFAULT_BOOTSTRAP_ITER,
-        DEFAULT_SMA_SWEEP,
+        MIN_DATA_POINTS,
+        PRESET_UNIVERSE,
     )
 except ImportError:
-    import sys
     import os
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+    import sys
+
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from src.modules import (
-        data_model,
-        signals,
-        backtester,
-        portfolio,
-        risk,
-        factors,
-        scenario,
-        liquidity,
         alerts,
-        reporting,
+        backtester,
+        data_model,
+        factors,
+        liquidity,
+        portfolio,
         regime_analysis,
+        reporting,
+        risk,
+        scenario,
+        signals,
         sweep,
     )
     from src.modules.config import (
-        PRESET_UNIVERSE,
-        DEFAULT_SMA_WINDOW,
-        DEFAULT_MOMENTUM_WINDOW,
-        DEFAULT_VOL_QUANTILE_HIGH,
-        DEFAULT_COST_BPS,
-        MIN_DATA_POINTS,
-        DEFAULT_BENCHMARK,
-        DEFAULT_PORTFOLIO_VALUE,
         DEFAULT_ADV_PCT,
+        DEFAULT_BENCHMARK,
+        DEFAULT_BOOTSTRAP_ITER,
+        DEFAULT_COST_BPS,
+        DEFAULT_MOMENTUM_WINDOW,
+        DEFAULT_PORTFOLIO_VALUE,
+        DEFAULT_SMA_SWEEP,
+        DEFAULT_SMA_WINDOW,
+        DEFAULT_VOL_QUANTILE_HIGH,
         FACTOR_PROXIES,
         MACRO_PROXIES,
-        DEFAULT_BOOTSTRAP_ITER,
-        DEFAULT_SMA_SWEEP,
+        MIN_DATA_POINTS,
+        PRESET_UNIVERSE,
     )
 
 
@@ -79,9 +81,9 @@ def get_cache_key(*args) -> str:
 
 
 # Initialize session state for caching expensive computations
-if 'computed_signals' not in st.session_state:
+if "computed_signals" not in st.session_state:
     st.session_state.computed_signals = {}
-if 'backtest_results' not in st.session_state:
+if "backtest_results" not in st.session_state:
     st.session_state.backtest_results = {}
 
 
@@ -90,11 +92,12 @@ st.set_page_config(
     page_title="Quantitative Research Dashboard",
     page_icon="♟️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # --- CSS Styling ---
-st.markdown("""
+st.markdown(
+    """
 <style>
     .metric-card {
         background-color: #1e1e1e;
@@ -109,7 +112,9 @@ st.markdown("""
     .regime-high { color: #ff4b4b; font-weight: bold; }
     .regime-low { color: #00ff00; font-weight: bold; }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # --- Sidebar Inputs ---
 with st.sidebar:
@@ -139,9 +144,7 @@ with st.sidebar:
         preset_select = st.multiselect("Preset Universe", PRESET_UNIVERSE, default=[])
         weights_input = st.text_input("Weights (comma-separated, optional)")
         portfolio_value = st.number_input(
-            "Portfolio Value (USD)",
-            value=float(DEFAULT_PORTFOLIO_VALUE),
-            step=100000.0
+            "Portfolio Value (USD)", value=float(DEFAULT_PORTFOLIO_VALUE), step=100000.0
         )
         benchmark_ticker = st.text_input("Benchmark Ticker", value=DEFAULT_BENCHMARK).upper()
 
@@ -150,7 +153,7 @@ with st.sidebar:
 
     if date_mode == "Custom":
         d_col1, d_col2 = st.columns(2)
-        start_date = d_col1.date_input("Start", value=datetime.today() - timedelta(days=365*2))
+        start_date = d_col1.date_input("Start", value=datetime.today() - timedelta(days=365 * 2))
         end_date = d_col2.date_input("End", value=datetime.today())
         period_arg = "max"
     else:
@@ -160,24 +163,39 @@ with st.sidebar:
     st.subheader("3. Signal Parameters")
     if mode == "Single-Asset":
         sma_window = st.slider(
-            "Trend SMA Window", 10, 200, DEFAULT_SMA_WINDOW, 10,
-            help="Lookback days for Simple Moving Average trend signal."
+            "Trend SMA Window",
+            10,
+            200,
+            DEFAULT_SMA_WINDOW,
+            10,
+            help="Lookback days for Simple Moving Average trend signal.",
         )
         mom_window = st.slider(
-            "Momentum Lookback (Months)", 1, 24, DEFAULT_MOMENTUM_WINDOW, 1,
-            help="Lookback months for Momentum signal."
+            "Momentum Lookback (Months)",
+            1,
+            24,
+            DEFAULT_MOMENTUM_WINDOW,
+            1,
+            help="Lookback months for Momentum signal.",
         )
     else:
         factor_window = st.slider("Factor Beta Window (days)", 20, 252, 63, 7)
         vol_window = st.slider("Regime Vol Window (days)", 10, 60, 21, 5)
-        adv_pct = st.slider("ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01)
+        adv_pct = st.slider(
+            "ADV Participation %",
+            0.01,
+            0.30,
+            float(DEFAULT_ADV_PCT),
+            0.01,
+            help="Maximum percentage of Average Daily Volume to trade. Higher values increase liquidity risk.",
+        )
 
     st.markdown("---")
     st.subheader("4. Research Rigor")
     use_oos = st.toggle(
         "Out-of-Sample Mode",
         value=False,
-        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting."
+        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting.",
     )
     if use_oos:
         st.success("✓ Look-ahead bias removed")
@@ -185,12 +203,25 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
 
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+        "High Volatility Quantile",
+        0.5,
+        0.95,
+        DEFAULT_VOL_QUANTILE_HIGH,
+        0.05,
+        help="Threshold for defining 'High Volatility'. 0.80 means the top 20% most volatile days are classified as High Vol.",
     )
 
     if mode == "Single-Asset":
         st.subheader("5. Backtest Settings")
-        bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
+        bt_cost = (
+            st.number_input(
+                "Transaction Cost (bps)",
+                value=DEFAULT_COST_BPS,
+                step=1,
+                help="Basis points per trade. 10 bps = 0.10%. Simulates broker commissions and slippage.",
+            )
+            / 10000
+        )
         allow_short = st.checkbox("Allow Short Selling?", value=False)
     else:
         st.subheader("5. Alert Thresholds")
@@ -260,7 +291,9 @@ if mode == "Portfolio":
         volume_df = volume_df.loc[mask].copy()
 
     if len(price_df) < MIN_DATA_POINTS:
-        st.warning(f"Not enough data points for selected range/period (need at least {MIN_DATA_POINTS}).")
+        st.warning(
+            f"Not enough data points for selected range/period (need at least {MIN_DATA_POINTS})."
+        )
         st.stop()
 
     # Align weights to available tickers
@@ -280,7 +313,11 @@ if mode == "Portfolio":
         if date_mode == "Custom":
             bmask = (benchmark_df.index.date >= start_date) & (benchmark_df.index.date <= end_date)
             benchmark_df = benchmark_df.loc[bmask].copy()
-    benchmark_returns = benchmark_df["Close"].pct_change().dropna() if not benchmark_df.empty else pd.Series(dtype=float)
+    benchmark_returns = (
+        benchmark_df["Close"].pct_change().dropna()
+        if not benchmark_df.empty
+        else pd.Series(dtype=float)
+    )
 
     # Risk metrics
     ann_vol = port_returns.std() * np.sqrt(252)
@@ -295,7 +332,9 @@ if mode == "Portfolio":
     max_dttl = liquidity_df["DaysToLiquidate"].max() if not liquidity_df.empty else np.nan
 
     # Factor attribution
-    factor_data = data_model.fetch_multi_asset_data(tuple(FACTOR_PROXIES.values()), period=period_arg)
+    factor_data = data_model.fetch_multi_asset_data(
+        tuple(FACTOR_PROXIES.values()), period=period_arg
+    )
     factor_prices = data_model.align_close_prices(factor_data)
     if date_mode == "Custom" and not factor_prices.empty:
         fmask = (factor_prices.index.date >= start_date) & (factor_prices.index.date <= end_date)
@@ -314,13 +353,17 @@ if mode == "Portfolio":
     macro_betas = factors.compute_factor_betas(port_returns, macro_returns, window=factor_window)
 
     # Alpha series
-    alpha_series = factors.compute_alpha_series(port_returns, benchmark_returns, window=factor_window)
+    alpha_series = factors.compute_alpha_series(
+        port_returns, benchmark_returns, window=factor_window
+    )
 
     # Regime classification on benchmark
     regime_label = "N/A"
     benchmark_regimes = None
     if not benchmark_df.empty:
-        bench_ind = signals.add_technical_indicators(benchmark_df, sma_window=200, mom_window=DEFAULT_MOMENTUM_WINDOW, vol_window=vol_window)
+        bench_ind = signals.add_technical_indicators(
+            benchmark_df, sma_window=200, mom_window=DEFAULT_MOMENTUM_WINDOW, vol_window=vol_window
+        )
         bench_ind = signals.detect_volatility_regime(
             bench_ind,
             vol_col=f"Vol_{vol_window}d",
@@ -347,13 +390,17 @@ if mode == "Portfolio":
             temp.columns = ["Return", "Vol_Regime"]
             stats = backtester.calculate_regime_stats(temp, "Return", "Vol_Regime")
             sens = regime_analysis.compute_regime_sensitivity(stats)
-            rows.append({
-                "Asset": asset,
-                "Sharpe_Diff": sens.get("Sharpe_Diff", np.nan),
-                "CAGR_Diff": sens.get("CAGR_Diff", np.nan),
-            })
+            rows.append(
+                {
+                    "Asset": asset,
+                    "Sharpe_Diff": sens.get("Sharpe_Diff", np.nan),
+                    "CAGR_Diff": sens.get("CAGR_Diff", np.nan),
+                }
+            )
         if rows:
-            regime_sensitivity_df = pd.DataFrame(rows).set_index("Asset").sort_values("Sharpe_Diff", ascending=False)
+            regime_sensitivity_df = (
+                pd.DataFrame(rows).set_index("Asset").sort_values("Sharpe_Diff", ascending=False)
+            )
 
         port_temp = pd.concat([port_returns, benchmark_regimes], axis=1).dropna()
         if not port_temp.empty:
@@ -401,7 +448,15 @@ if mode == "Portfolio":
 
     # --- Portfolio Tabs ---
     tab_ov, tab_risk, tab_attr, tab_scen, tab_sig, tab_alert, tab_rep = st.tabs(
-        ["📈 Overview", "🛡️ Risk & Liquidity", "🧬 Attribution", "🧪 Scenario", "📡 Signals Health", "🚨 Alerts", "📄 Report"]
+        [
+            "📈 Overview",
+            "🛡️ Risk & Liquidity",
+            "🧬 Attribution",
+            "🧪 Scenario",
+            "📡 Signals Health",
+            "🚨 Alerts",
+            "📄 Report",
+        ]
     )
 
     # Overview
@@ -417,7 +472,9 @@ if mode == "Portfolio":
                 q = query.lower()
                 if "top" in q and "mover" in q:
                     last_returns = price_df.pct_change().iloc[-1].sort_values(ascending=False)
-                    st.write(last_returns.head(5).to_frame("Last Day Return").style.format("{:.2%}"))
+                    st.write(
+                        last_returns.head(5).to_frame("Last Day Return").style.format("{:.2%}")
+                    )
                 elif "factor" in q and "drift" in q and not factor_betas.empty:
                     drift = factor_betas.iloc[-1] - factor_betas.iloc[-min(21, len(factor_betas))]
                     st.write(drift.to_frame("Beta Drift (20d)").style.format("{:.2f}"))
@@ -430,10 +487,21 @@ if mode == "Portfolio":
 
         st.subheader("Equity Curve vs Benchmark")
         fig_eq = go.Figure()
-        fig_eq.add_trace(go.Scatter(x=port_equity.index, y=port_equity, name="Portfolio", line=dict(color="#00ff00")))
+        fig_eq.add_trace(
+            go.Scatter(
+                x=port_equity.index, y=port_equity, name="Portfolio", line={"color": "#00ff00"}
+            )
+        )
         if not benchmark_returns.empty:
             bench_equity = (1 + benchmark_returns).cumprod()
-            fig_eq.add_trace(go.Scatter(x=bench_equity.index, y=bench_equity, name=benchmark_ticker, line=dict(color="#888")))
+            fig_eq.add_trace(
+                go.Scatter(
+                    x=bench_equity.index,
+                    y=bench_equity,
+                    name=benchmark_ticker,
+                    line={"color": "#888"},
+                )
+            )
         fig_eq.update_layout(template="plotly_dark", height=420)
         st.plotly_chart(fig_eq, use_container_width=True)
 
@@ -461,12 +529,22 @@ if mode == "Portfolio":
         st.subheader("Risk Posture")
         score = risk.risk_posture_score(ann_vol, max_dd, beta, max_dttl)
         st.metric("Risk Posture Score", f"{score:.0f}/100")
-        st.caption("Higher is better. Penalizes high vol, deep drawdowns, high beta, and illiquidity.")
+        st.caption(
+            "Higher is better. Penalizes high vol, deep drawdowns, high beta, and illiquidity."
+        )
 
         st.subheader("Drawdown")
         dd_series = risk.compute_drawdown_series(port_equity)
         fig_dd = go.Figure()
-        fig_dd.add_trace(go.Scatter(x=dd_series.index, y=dd_series * 100, name="Drawdown", fill="tozeroy", line=dict(color="#ff4b4b")))
+        fig_dd.add_trace(
+            go.Scatter(
+                x=dd_series.index,
+                y=dd_series * 100,
+                name="Drawdown",
+                fill="tozeroy",
+                line={"color": "#ff4b4b"},
+            )
+        )
         fig_dd.update_layout(template="plotly_dark", height=300, yaxis_title="Drawdown (%)")
         st.plotly_chart(fig_dd, use_container_width=True)
 
@@ -474,12 +552,16 @@ if mode == "Portfolio":
         if liquidity_df.empty:
             st.info("Liquidity data not available.")
         else:
-            st.dataframe(liquidity_df.style.format({
-                "Weight": "{:.2%}",
-                "PositionValue": "${:,.0f}",
-                "ADV$": "${:,.0f}",
-                "DaysToLiquidate": "{:.1f}",
-            }))
+            st.dataframe(
+                liquidity_df.style.format(
+                    {
+                        "Weight": "{:.2%}",
+                        "PositionValue": "${:,.0f}",
+                        "ADV$": "${:,.0f}",
+                        "DaysToLiquidate": "{:.1f}",
+                    }
+                )
+            )
 
         st.subheader("Correlation Matrix")
         corr = risk.compute_correlation_matrix(price_df.pct_change().dropna())
@@ -506,7 +588,11 @@ if mode == "Portfolio":
         st.subheader("Rolling Alpha")
         if not alpha_series.empty:
             fig_alpha = go.Figure()
-            fig_alpha.add_trace(go.Scatter(x=alpha_series.index, y=alpha_series, name="Alpha", line=dict(color="#00ff00")))
+            fig_alpha.add_trace(
+                go.Scatter(
+                    x=alpha_series.index, y=alpha_series, name="Alpha", line={"color": "#00ff00"}
+                )
+            )
             fig_alpha.update_layout(template="plotly_dark", height=300)
             st.plotly_chart(fig_alpha, use_container_width=True)
 
@@ -540,7 +626,9 @@ if mode == "Portfolio":
         else:
             bench_tmp = benchmark_df.copy()
             bench_tmp["Daily_Return"] = bench_tmp["Close"].pct_change()
-            bench_tmp["Signal"] = np.sign(bench_tmp["Close"] - bench_tmp["Close"].rolling(50).mean())
+            bench_tmp["Signal"] = np.sign(
+                bench_tmp["Close"] - bench_tmp["Close"].rolling(50).mean()
+            )
             for h in [21, 63, 126]:
                 bench_tmp[f"Fwd_{h}"] = bench_tmp["Close"].pct_change(h).shift(-h)
             decay = {
@@ -554,7 +642,7 @@ if mode == "Portfolio":
             st.subheader("Rolling IC (Signal vs 1M Forward Return)")
             ic = bench_tmp["Signal"].rolling(63).corr(bench_tmp["Fwd_21"])
             fig_ic = go.Figure()
-            fig_ic.add_trace(go.Scatter(x=ic.index, y=ic, name="IC", line=dict(color="#ff9f43")))
+            fig_ic.add_trace(go.Scatter(x=ic.index, y=ic, name="IC", line={"color": "#ff9f43"}))
             fig_ic.update_layout(template="plotly_dark", height=300)
             st.plotly_chart(fig_ic, use_container_width=True)
 
@@ -584,14 +672,18 @@ if mode == "Portfolio":
             "Beta": f"{beta:.2f}" if not np.isnan(beta) else "N/A",
             "Regime Sensitivity (Sharpe Diff)": f"{portfolio_sensitivity.get('Sharpe_Diff', np.nan):.2f}",
             "Benchmark Sensitivity (Sharpe Diff)": f"{benchmark_sensitivity.get('Sharpe_Diff', np.nan):.2f}",
-            "VaR (95%)": f"{var_cvar['VaR']:.2%}" if not np.isnan(var_cvar['VaR']) else "N/A",
-            "CVaR (95%)": f"{var_cvar['CVaR']:.2%}" if not np.isnan(var_cvar['CVaR']) else "N/A",
+            "VaR (95%)": f"{var_cvar['VaR']:.2%}" if not np.isnan(var_cvar["VaR"]) else "N/A",
+            "CVaR (95%)": f"{var_cvar['CVaR']:.2%}" if not np.isnan(var_cvar["CVaR"]) else "N/A",
         }
         tables = {
             "Weights": weights.to_frame("Weight"),
             "Liquidity": liquidity_df,
-            "Latest Factor Betas": factor_betas.tail(1) if not factor_betas.empty else pd.DataFrame(),
-            "Regime Sensitivity": regime_sensitivity_df if not regime_sensitivity_df.empty else pd.DataFrame(),
+            "Latest Factor Betas": (
+                factor_betas.tail(1) if not factor_betas.empty else pd.DataFrame()
+            ),
+            "Regime Sensitivity": (
+                regime_sensitivity_df if not regime_sensitivity_df.empty else pd.DataFrame()
+            ),
         }
         payload = reporting.build_report_payload(summary, tables)
         st.markdown(payload["markdown"])
@@ -634,7 +726,9 @@ else:
     df = raw_df.copy()
 
 if len(df) < MIN_DATA_POINTS:
-    st.warning(f"Not enough data points for selected range/period (need at least {MIN_DATA_POINTS}).")
+    st.warning(
+        f"Not enough data points for selected range/period (need at least {MIN_DATA_POINTS})."
+    )
     st.stop()
 
 # --- Signal Calculation (with session state caching) ---
@@ -642,7 +736,9 @@ signal_cache_key = get_cache_key(ticker, period_arg, sma_window, mom_window, dat
 
 if signal_cache_key not in st.session_state.computed_signals:
     with st.spinner("Computing technical indicators..."):
-        computed_df = signals.add_technical_indicators(df, sma_window=sma_window, mom_window=mom_window)
+        computed_df = signals.add_technical_indicators(
+            df, sma_window=sma_window, mom_window=mom_window
+        )
         st.session_state.computed_signals[signal_cache_key] = computed_df
 
 df = st.session_state.computed_signals[signal_cache_key].copy()
@@ -650,64 +746,59 @@ df = st.session_state.computed_signals[signal_cache_key].copy()
 # --- Regime Detection ---
 # Using 21-day annualized vol with option for out-of-sample analysis
 df = signals.detect_volatility_regime(
-    df, 
-    vol_col='Vol_21d', 
-    quantile_high=vol_q_high, 
+    df,
+    vol_col="Vol_21d",
+    quantile_high=vol_q_high,
     quantile_low=0.25,
-    use_expanding=use_oos  # Toggle between in-sample and out-of-sample
+    use_expanding=use_oos,  # Toggle between in-sample and out-of-sample
 )
 
 # --- Dashboard Header ---
 st.markdown("## 🔍 Research Question")
-st.markdown("> **How sensitive is trend-following performance to volatility regimes in US equities?**")
+st.markdown(
+    "> **How sensitive is trend-following performance to volatility regimes in US equities?**"
+)
 
 latest = df.iloc[-1]
 prev = df.iloc[-2]
-chg_pct = latest['Daily_Return']
+chg_pct = latest["Daily_Return"]
 
 h1, h2, h3, h4 = st.columns(4)
 h1.metric("Asset", f"{ticker} (${latest['Close']:.2f})", f"{chg_pct:.2%}")
-h2.metric("Current Regime", latest['Vol_Regime'])
+h2.metric("Current Regime", latest["Vol_Regime"])
 h3.metric(f"Volatility ({vol_q_high:.0%}-tile)", f"{latest['Vol_21d']:.2%}")
-h4.metric("Trend Status", "BULLISH" if latest['Close'] > latest[f'SMA_{sma_window}'] else "BEARISH")
+h4.metric("Trend Status", "BULLISH" if latest["Close"] > latest[f"SMA_{sma_window}"] else "BEARISH")
 
 # --- Backtest (cached for reuse) ---
-df['Signal_Trend'] = np.where(df['Close'] > df[f'SMA_{sma_window}'], 1, -1 if allow_short else 0)
-bt_cache_key = get_cache_key(
-    signal_cache_key, bt_cost, allow_short, use_oos, vol_q_high
-)
+df["Signal_Trend"] = np.where(df["Close"] > df[f"SMA_{sma_window}"], 1, -1 if allow_short else 0)
+bt_cache_key = get_cache_key(signal_cache_key, bt_cost, allow_short, use_oos, vol_q_high)
 
 if bt_cache_key not in st.session_state.backtest_results:
     with st.spinner("Running backtest simulation..."):
-        res_df = backtester.run_backtest(df, 'Signal_Trend', cost_bps=bt_cost, rebalance_freq='M')
+        res_df = backtester.run_backtest(df, "Signal_Trend", cost_bps=bt_cost, rebalance_freq="M")
         st.session_state.backtest_results[bt_cache_key] = res_df
 
 res_df = st.session_state.backtest_results[bt_cache_key]
 if not res_df.empty:
     res_df = res_df.copy()
-    res_df['Vol_Regime'] = df['Vol_Regime']
+    res_df["Vol_Regime"] = df["Vol_Regime"]
 
-    cond_stats = backtester.calculate_conditional_stats(
-        res_df, 'Strategy_Net_Return', 'Vol_Regime'
-    )
-    bench_cond = backtester.calculate_conditional_stats(
-        res_df, 'Daily_Return', 'Vol_Regime'
-    )
-    stats_by_regime = backtester.calculate_regime_stats(
-        res_df, 'Strategy_Net_Return', 'Vol_Regime'
-    )
+    cond_stats = backtester.calculate_conditional_stats(res_df, "Strategy_Net_Return", "Vol_Regime")
+    bench_cond = backtester.calculate_conditional_stats(res_df, "Daily_Return", "Vol_Regime")
+    stats_by_regime = backtester.calculate_regime_stats(res_df, "Strategy_Net_Return", "Vol_Regime")
     regime_sensitivity = regime_analysis.compute_regime_sensitivity(stats_by_regime)
     bootstrap_sharpe = regime_analysis.bootstrap_regime_diff(
-        res_df['Strategy_Net_Return'], res_df['Vol_Regime'], metric="Sharpe", n_boot=DEFAULT_BOOTSTRAP_ITER
+        res_df["Strategy_Net_Return"],
+        res_df["Vol_Regime"],
+        metric="Sharpe",
+        n_boot=DEFAULT_BOOTSTRAP_ITER,
     )
 
-    transition_matrix = regime_analysis.compute_transition_matrix(df['Vol_Regime'])
+    transition_matrix = regime_analysis.compute_transition_matrix(df["Vol_Regime"])
     transition_stats = regime_analysis.compute_transition_stats(
-        res_df['Strategy_Net_Return'], res_df['Vol_Regime']
+        res_df["Strategy_Net_Return"], res_df["Vol_Regime"]
     )
-    sweep_df = sweep.run_sma_regime_sweep(
-        df, DEFAULT_SMA_SWEEP, mom_window, vol_q_high, use_oos
-    )
+    sweep_df = sweep.run_sma_regime_sweep(df, DEFAULT_SMA_SWEEP, mom_window, vol_q_high, use_oos)
 else:
     cond_stats = pd.DataFrame()
     bench_cond = pd.DataFrame()
@@ -727,23 +818,42 @@ tab_ov, tab_regime, tab_lab, tab_bt, tab_rep = st.tabs(
 with tab_ov:
     # Interactive Price Chart
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=df.index, y=df['Close'], name='Close Price', line=dict(color='white', width=1)))
-    fig.add_trace(go.Scatter(x=df.index, y=df[f'SMA_{sma_window}'], name=f'{sma_window}-Day SMA', line=dict(color='#ff9f43', width=1)))
-    
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df["Close"], name="Close Price", line={"color": "white", "width": 1}
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=df[f"SMA_{sma_window}"],
+            name=f"{sma_window}-Day SMA",
+            line={"color": "#ff9f43", "width": 1},
+        )
+    )
+
     # Highlight High Volatility Regimes
     # Filter high vol periods
-    high_vol_mask = df['Vol_Regime'] == 'High'
+    high_vol_mask = df["Vol_Regime"] == "High"
     # We can plot markers or shade areas. Shading is valid but tricky in Plotly without shapes list.
     # Let's plot points
     high_vol_pts = df[high_vol_mask]
-    fig.add_trace(go.Scatter(x=high_vol_pts.index, y=high_vol_pts['Close'], mode='markers', name='High Volatility', marker=dict(color='red', size=2)))
-    
+    fig.add_trace(
+        go.Scatter(
+            x=high_vol_pts.index,
+            y=high_vol_pts["Close"],
+            mode="markers",
+            name="High Volatility",
+            marker={"color": "red", "size": 2},
+        )
+    )
+
     fig.update_layout(
         title=f"{ticker} Price History & Regime Context",
         yaxis_title="Price ($)",
         template="plotly_dark",
         height=500,
-        hovermode="x unified"
+        hovermode="x unified",
     )
     st.plotly_chart(fig, use_container_width=True)
     st.caption("Red dots indicate days classified as 'High Volatility' regime.")
@@ -751,25 +861,38 @@ with tab_ov:
 # --- TAB 2: REGIME ANALYSIS ---
 with tab_regime:
     st.subheader("Volatility Regime Classification")
-    
+
     c1, c2 = st.columns(2)
     with c1:
         # Scatter: Vol vs Returns needed? Maybe just distribution
-        fig_hist = px.histogram(df, x="Vol_21d", color="Vol_Regime", nbins=50, title="Volatility Distribution", template="plotly_dark",
-                                color_discrete_map={"High": "#ff4b4b", "Low": "#00ff00", "Normal": "#888888"})
+        fig_hist = px.histogram(
+            df,
+            x="Vol_21d",
+            color="Vol_Regime",
+            nbins=50,
+            title="Volatility Distribution",
+            template="plotly_dark",
+            color_discrete_map={"High": "#ff4b4b", "Low": "#00ff00", "Normal": "#888888"},
+        )
         st.plotly_chart(fig_hist, use_container_width=True)
-        
+
     with c2:
         # Pie chart of time spent in regimes
-        regime_counts = df['Vol_Regime'].value_counts()
-        fig_pie = px.pie(values=regime_counts, names=regime_counts.index, title="Time Spent in Regimes", template="plotly_dark",
-                         color=regime_counts.index, color_discrete_map={"High": "#ff4b4b", "Low": "#00ff00", "Normal": "#888888"})
+        regime_counts = df["Vol_Regime"].value_counts()
+        fig_pie = px.pie(
+            values=regime_counts,
+            names=regime_counts.index,
+            title="Time Spent in Regimes",
+            template="plotly_dark",
+            color=regime_counts.index,
+            color_discrete_map={"High": "#ff4b4b", "Low": "#00ff00", "Normal": "#888888"},
+        )
         st.plotly_chart(fig_pie, use_container_width=True)
-    
+
     st.markdown("### Regime Characteristics")
-    stats = df.groupby('Vol_Regime')[['Daily_Return', 'Vol_21d']].mean()
+    stats = df.groupby("Vol_Regime")[["Daily_Return", "Vol_21d"]].mean()
     # Annualize return
-    stats['Ann_Return'] = stats['Daily_Return'] * 252
+    stats["Ann_Return"] = stats["Daily_Return"] * 252
     st.dataframe(stats.style.format("{:.2%}"))
 
 # --- TAB 3: REGIME LAB ---
@@ -778,28 +901,39 @@ with tab_lab:
     if transition_matrix.empty:
         st.info("Not enough data to compute transition matrix.")
     else:
-        fig_tm = go.Figure(data=go.Heatmap(
-            z=transition_matrix.values,
-            x=transition_matrix.columns,
-            y=transition_matrix.index,
-            colorscale="Blues",
-            zmin=0,
-            zmax=1
-        ))
-        fig_tm.update_layout(template="plotly_dark", height=350, xaxis_title="Current Regime", yaxis_title="Previous Regime")
+        fig_tm = go.Figure(
+            data=go.Heatmap(
+                z=transition_matrix.values,
+                x=transition_matrix.columns,
+                y=transition_matrix.index,
+                colorscale="Blues",
+                zmin=0,
+                zmax=1,
+            )
+        )
+        fig_tm.update_layout(
+            template="plotly_dark",
+            height=350,
+            xaxis_title="Current Regime",
+            yaxis_title="Previous Regime",
+        )
         st.plotly_chart(fig_tm, use_container_width=True)
 
     st.subheader("Transition Impact")
     if transition_stats.empty:
         st.info("Not enough data to compute transition performance.")
     else:
-        st.dataframe(transition_stats.style.format({
-            "Mean": "{:.2%}",
-            "Sharpe": "{:.2f}",
-            "WinRate": "{:.1%}",
-            "CAGR": "{:.2%}",
-            "Count": "{:.0f}",
-        }))
+        st.dataframe(
+            transition_stats.style.format(
+                {
+                    "Mean": "{:.2%}",
+                    "Sharpe": "{:.2f}",
+                    "WinRate": "{:.1%}",
+                    "CAGR": "{:.2%}",
+                    "Count": "{:.0f}",
+                }
+            )
+        )
 
     st.subheader("Regime Sensitivity")
     c_s1, c_s2, c_s3 = st.columns(3)
@@ -820,7 +954,7 @@ with tab_lab:
             sweep_sharpe,
             aspect="auto",
             color_continuous_scale="RdYlGn",
-            title="Sharpe by SMA Window and Regime"
+            title="Sharpe by SMA Window and Regime",
         )
         fig_sweep.update_layout(template="plotly_dark", height=350)
         st.plotly_chart(fig_sweep, use_container_width=True)
@@ -828,146 +962,192 @@ with tab_lab:
 # --- TAB 3: BACKTEST ---
 with tab_bt:
     st.subheader("Strategy Simulation")
-    
+
     # Out-of-sample mode indicator
     if use_oos:
-        st.success("🔬 **Out-of-Sample Mode Active** - Regime classification uses only past data at each point")
+        st.success(
+            "🔬 **Out-of-Sample Mode Active** - Regime classification uses only past data at each point"
+        )
 
     if not res_df.empty:
-        
+
         # 1. Global Metrics with Bootstrap CI
         strat_metrics = backtester.calculate_perf_metrics(
-            res_df['Equity_Strategy'], 
-            include_bootstrap_ci=True,
-            n_bootstrap=500
+            res_df["Equity_Strategy"], include_bootstrap_ci=True, n_bootstrap=500
         )
-        bench_metrics = backtester.calculate_perf_metrics(res_df['Equity_Benchmark'])
-        
+        bench_metrics = backtester.calculate_perf_metrics(res_df["Equity_Benchmark"])
+
         col_m1, col_m2, col_m3, col_m4 = st.columns(4)
         col_m1.metric("Global CAGR", f"{strat_metrics['CAGR']:.2%}")
-        
+
         # Show Sharpe with CI if available
         sharpe_display = f"{strat_metrics['Sharpe']:.2f}"
-        if strat_metrics.get('Sharpe_CI_Lower') is not None:
-            sharpe_display += f" [{strat_metrics['Sharpe_CI_Lower']:.2f}, {strat_metrics['Sharpe_CI_Upper']:.2f}]"
+        if strat_metrics.get("Sharpe_CI_Lower") is not None:
+            sharpe_display += (
+                f" [{strat_metrics['Sharpe_CI_Lower']:.2f}, {strat_metrics['Sharpe_CI_Upper']:.2f}]"
+            )
         col_m2.metric("Sharpe (95% CI)", sharpe_display)
-        
+
         col_m3.metric("Max Drawdown", f"{strat_metrics['MaxDD']:.2%}")
         col_m4.metric("Max DD Duration", f"{strat_metrics.get('MaxDD_Duration', 0)} days")
-        
+
         # Additional metrics row
         col_a1, col_a2, col_a3, col_a4 = st.columns(4)
         col_a1.metric("Sortino", f"{strat_metrics.get('Sortino', 0):.2f}")
         col_a2.metric("Calmar", f"{strat_metrics.get('Calmar', 0):.2f}")
         col_a3.metric("Win Rate", f"{strat_metrics.get('WinRate', 0):.1%}")
         col_a4.metric("Avg DD Duration", f"{strat_metrics.get('AvgDD_Duration', 0):.0f} days")
-        
+
         # 2. Equity Curve
         fig_eq = go.Figure()
-        fig_eq.add_trace(go.Scatter(x=res_df.index, y=res_df['Equity_Strategy'], name='Trend Strategy', line=dict(color='#00ff00')))
-        fig_eq.add_trace(go.Scatter(x=res_df.index, y=res_df['Equity_Benchmark'], name='Buy & Hold', line=dict(color='gray', dash='dot')))
+        fig_eq.add_trace(
+            go.Scatter(
+                x=res_df.index,
+                y=res_df["Equity_Strategy"],
+                name="Trend Strategy",
+                line={"color": "#00ff00"},
+            )
+        )
+        fig_eq.add_trace(
+            go.Scatter(
+                x=res_df.index,
+                y=res_df["Equity_Benchmark"],
+                name="Buy & Hold",
+                line={"color": "gray", "dash": "dot"},
+            )
+        )
         fig_eq.update_layout(title="Equity Curve", template="plotly_dark", height=400)
         st.plotly_chart(fig_eq, use_container_width=True)
-        
+
         # 3. Drawdown Chart
         with st.expander("📉 Drawdown Analysis", expanded=False):
             fig_dd = go.Figure()
-            fig_dd.add_trace(go.Scatter(
-                x=res_df.index, y=res_df['DD_Strategy'] * 100, 
-                name='Strategy Drawdown', fill='tozeroy',
-                line=dict(color='#ff4b4b')
-            ))
-            fig_dd.add_trace(go.Scatter(
-                x=res_df.index, y=res_df['DD_Benchmark'] * 100, 
-                name='Benchmark Drawdown',
-                line=dict(color='gray', dash='dot')
-            ))
+            fig_dd.add_trace(
+                go.Scatter(
+                    x=res_df.index,
+                    y=res_df["DD_Strategy"] * 100,
+                    name="Strategy Drawdown",
+                    fill="tozeroy",
+                    line={"color": "#ff4b4b"},
+                )
+            )
+            fig_dd.add_trace(
+                go.Scatter(
+                    x=res_df.index,
+                    y=res_df["DD_Benchmark"] * 100,
+                    name="Benchmark Drawdown",
+                    line={"color": "gray", "dash": "dot"},
+                )
+            )
             fig_dd.update_layout(
                 title="Underwater Equity (Drawdown %)",
                 yaxis_title="Drawdown (%)",
                 template="plotly_dark",
-                height=300
+                height=300,
             )
             st.plotly_chart(fig_dd, use_container_width=True)
-        
+
         # 4. Conditional Analysis
         st.markdown("### 🔬 Conditional Performance by Regime")
         st.info("Does the strategy outperform during High Volatility?")
-        
+
         # Merge
-        comparison = pd.concat([cond_stats.add_suffix('_Strat'), bench_cond.add_suffix('_Bench')], axis=1)
-        
+        comparison = pd.concat(
+            [cond_stats.add_suffix("_Strat"), bench_cond.add_suffix("_Bench")], axis=1
+        )
+
         # Reorder columns - handle missing columns gracefully
         available_cols = []
-        for col in ['Ann_Return_Strat', 'Ann_Return_Bench', 'Sharpe_Strat', 'Sharpe_Bench', 'WinRate_Strat']:
+        for col in [
+            "Ann_Return_Strat",
+            "Ann_Return_Bench",
+            "Sharpe_Strat",
+            "Sharpe_Bench",
+            "WinRate_Strat",
+        ]:
             if col in comparison.columns:
                 available_cols.append(col)
         comparison = comparison[available_cols]
-        
-        st.dataframe(comparison.style.background_gradient(cmap='RdYlGn', subset=['Ann_Return_Strat', 'Sharpe_Strat']).format("{:.2f}"))
-        
-        st.markdown("**Key Insight:** Compare 'Sharpe_Strat' vs 'Sharpe_Bench' in the **High** volatility row.")
-        
+
+        st.dataframe(
+            comparison.style.background_gradient(
+                cmap="RdYlGn", subset=["Ann_Return_Strat", "Sharpe_Strat"]
+            ).format("{:.2f}")
+        )
+
+        st.markdown(
+            "**Key Insight:** Compare 'Sharpe_Strat' vs 'Sharpe_Bench' in the **High** volatility row."
+        )
+
         # 5. Walk-Forward Validation (Advanced)
         with st.expander("🚀 Walk-Forward Validation (Advanced)", expanded=False):
             st.markdown("""
-            Walk-forward validation splits data into rolling train/test windows to evaluate 
+            Walk-forward validation splits data into rolling train/test windows to evaluate
             out-of-sample performance. This is more rigorous than a single full-sample backtest.
             """)
-            
+
             wf_col1, wf_col2 = st.columns(2)
-            wf_train = wf_col1.number_input("Training Window (months)", value=24, min_value=6, max_value=60)
-            wf_test = wf_col2.number_input("Test Window (months)", value=6, min_value=1, max_value=12)
-            
+            wf_train = wf_col1.number_input(
+                "Training Window (months)", value=24, min_value=6, max_value=60
+            )
+            wf_test = wf_col2.number_input(
+                "Test Window (months)", value=6, min_value=1, max_value=12
+            )
+
             if st.button("Run Walk-Forward Analysis"):
                 with st.spinner("Running walk-forward validation..."):
                     wf_results = backtester.walk_forward_backtest(
-                        df, 'Signal_Trend',
+                        df,
+                        "Signal_Trend",
                         train_months=wf_train,
                         test_months=wf_test,
                         cost_bps=bt_cost,
-                        rebalance_freq='M'
+                        rebalance_freq="M",
                     )
-                
+
                 if wf_results:
                     st.success(f"✅ Completed {wf_results['n_periods']} walk-forward periods")
-                    
-                    wf_summary = wf_results['summary']
+
+                    wf_summary = wf_results["summary"]
                     wf_c1, wf_c2, wf_c3 = st.columns(3)
                     wf_c1.metric("OOS CAGR", f"{wf_summary.get('CAGR', 0):.2%}")
                     wf_c2.metric("OOS Sharpe", f"{wf_summary.get('Sharpe', 0):.2f}")
                     wf_c3.metric("OOS Max DD", f"{wf_summary.get('MaxDD', 0):.2%}")
-                    
+
                     # Show per-period results
                     st.markdown("#### Per-Period Results")
                     period_data = []
-                    for p in wf_results['periods']:
-                        period_data.append({
-                            'Test Period': f"{p['test_start']} to {p['test_end']}",
-                            'CAGR': p['metrics'].get('CAGR', 0),
-                            'Sharpe': p['metrics'].get('Sharpe', 0),
-                            'MaxDD': p['metrics'].get('MaxDD', 0)
-                        })
-                    st.dataframe(pd.DataFrame(period_data).style.format({
-                        'CAGR': '{:.2%}',
-                        'Sharpe': '{:.2f}',
-                        'MaxDD': '{:.2%}'
-                    }))
+                    for p in wf_results["periods"]:
+                        period_data.append(
+                            {
+                                "Test Period": f"{p['test_start']} to {p['test_end']}",
+                                "CAGR": p["metrics"].get("CAGR", 0),
+                                "Sharpe": p["metrics"].get("Sharpe", 0),
+                                "MaxDD": p["metrics"].get("MaxDD", 0),
+                            }
+                        )
+                    st.dataframe(
+                        pd.DataFrame(period_data).style.format(
+                            {"CAGR": "{:.2%}", "Sharpe": "{:.2f}", "MaxDD": "{:.2%}"}
+                        )
+                    )
                 else:
-                    st.warning("Insufficient data for walk-forward validation with current settings.")
+                    st.warning(
+                        "Insufficient data for walk-forward validation with current settings."
+                    )
 
 # --- TAB 4: REPORT ---
 with tab_rep:
     st.subheader("Research Note Generation")
-    
+
     st.markdown("### Findings Summary")
     st.write(f"**Asset**: {ticker}")
     st.write(f"**Trend Model**: {sma_window}-Day SMA")
-    
+
     if not res_df.empty:
         # Create text summary
-        high_vol_perf = cond_stats.loc['High', 'Sharpe'] if 'High' in cond_stats.index else 0
-        normal_vol_perf = cond_stats.loc['Normal', 'Sharpe'] if 'Normal' in cond_stats.index else 0
+        high_vol_perf = cond_stats.loc["High", "Sharpe"] if "High" in cond_stats.index else 0
+        normal_vol_perf = cond_stats.loc["Normal", "Sharpe"] if "Normal" in cond_stats.index else 0
 
         transition_risk = "N/A"
         if not transition_stats.empty and "Sharpe" in transition_stats.columns:
@@ -978,16 +1158,18 @@ with tab_rep:
             sweep_std = sweep_df.groupby("Regime")["Sharpe"].std().dropna()
             if not sweep_std.empty:
                 sweep_stability = ", ".join([f"{k}: {v:.2f}" for k, v in sweep_std.items()])
-        
+
         st.success(f"Strategy Sharpe in High Vol: **{high_vol_perf:.2f}**")
         st.info(f"Strategy Sharpe in Normal Vol: **{normal_vol_perf:.2f}**")
-        st.write(f"**Regime Sensitivity (Sharpe High - Normal)**: {regime_sensitivity.get('Sharpe_Diff', np.nan):.2f}")
+        st.write(
+            f"**Regime Sensitivity (Sharpe High - Normal)**: {regime_sensitivity.get('Sharpe_Diff', np.nan):.2f}"
+        )
         st.write(f"**Top Transition Risk**: {transition_risk}")
         st.write(f"**Sweep Stability (Sharpe Std)**: {sweep_stability}")
-        
+
         st.download_button(
             label="Download Full Research Data (CSV)",
-            data=res_df.to_csv().encode('utf-8'),
+            data=res_df.to_csv().encode("utf-8"),
             file_name=f"{ticker}_research_data.csv",
-            mime="text/csv"
+            mime="text/csv",
         )
