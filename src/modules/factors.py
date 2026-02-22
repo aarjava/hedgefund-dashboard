@@ -2,7 +2,6 @@
 Factor attribution utilities using proxy ETFs.
 """
 
-from typing import Dict
 import numpy as np
 import pandas as pd
 

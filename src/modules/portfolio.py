@@ -2,10 +2,10 @@
 Portfolio construction and analytics utilities.
 """
 
-from typing import Iterable, Dict
-import pandas as pd
-import numpy as np
 import logging
+from typing import Iterable
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 

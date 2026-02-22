@@ -10,6 +10,7 @@ import argparse
 import json
 import shutil
 import subprocess
+import sys
 import tarfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,8 +19,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yfinance as yf
-
-import sys
 
 REPO = Path("/Users/aarjavametha/Desktop/Projects/hedgefund-dashboard")
 sys.path.insert(0, str(REPO))
@@ -32,9 +31,9 @@ from src.modules.config import (  # noqa: E402
     DEFAULT_REBALANCE_FREQ,
     DEFAULT_SMA_SWEEP,
     DEFAULT_SMA_WINDOW,
-    DEFAULT_VOLATILITY_WINDOW,
     DEFAULT_VOL_QUANTILE_HIGH,
     DEFAULT_VOL_QUANTILE_LOW,
+    DEFAULT_VOLATILITY_WINDOW,
 )
 
 PALETTE = {
@@ -178,7 +177,7 @@ def prep(df: pd.DataFrame) -> pd.DataFrame:
         mom_window=12,
         vol_window=DEFAULT_VOLATILITY_WINDOW,
     )
-    out[f"SMA_200"] = out["Close"].rolling(200).mean()
+    out["SMA_200"] = out["Close"].rolling(200).mean()
     out = signals.detect_volatility_regime(
         out,
         vol_col=f"Vol_{DEFAULT_VOLATILITY_WINDOW}d",
@@ -802,8 +801,8 @@ def write_markdown(
 
     md = f"""# Volatility Regimes and Trend-Following Performance in U.S. Equities: An Empirical Deconstruction
 
-**Author:** Aarjav Ametha  
-**Date:** February 2026  
+**Author:** Aarjav Ametha
+**Date:** February 2026
 **Repository:** [github.com/aarjava/hedgefund-dashboard](https://github.com/aarjava/hedgefund-dashboard)
 
 ## Abstract
