@@ -10,6 +10,7 @@ import argparse
 import json
 import shutil
 import subprocess
+import sys
 import tarfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,8 +19,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yfinance as yf
-
-import sys
 
 REPO = Path("/Users/aarjavametha/Desktop/Projects/hedgefund-dashboard")
 sys.path.insert(0, str(REPO))
@@ -32,11 +31,10 @@ from src.modules.config import (  # noqa: E402
     DEFAULT_REBALANCE_FREQ,
     DEFAULT_SMA_SWEEP,
     DEFAULT_SMA_WINDOW,
-    DEFAULT_VOLATILITY_WINDOW,
     DEFAULT_VOL_QUANTILE_HIGH,
     DEFAULT_VOL_QUANTILE_LOW,
+    DEFAULT_VOLATILITY_WINDOW,
 )
-
 
 PALETTE = {
     "bg": "#f5f3ee",
@@ -179,7 +177,7 @@ def prep(df: pd.DataFrame) -> pd.DataFrame:
         mom_window=12,
         vol_window=DEFAULT_VOLATILITY_WINDOW,
     )
-    out[f"SMA_200"] = out["Close"].rolling(200).mean()
+    out["SMA_200"] = out["Close"].rolling(200).mean()
     out = signals.detect_volatility_regime(
         out,
         vol_col=f"Vol_{DEFAULT_VOLATILITY_WINDOW}d",
@@ -217,7 +215,10 @@ def compute_asset(raw: pd.DataFrame) -> AssetResults:
     bench_regime = backtester.calculate_regime_stats(bt_valid, "Daily_Return", "Vol_Regime")
 
     avg_vol = (
-        df.loc[df["Vol_Regime"].isin(["Low", "Normal", "High"]), [f"Vol_{DEFAULT_VOLATILITY_WINDOW}d", "Vol_Regime"]]
+        df.loc[
+            df["Vol_Regime"].isin(["Low", "Normal", "High"]),
+            [f"Vol_{DEFAULT_VOLATILITY_WINDOW}d", "Vol_Regime"],
+        ]
         .groupby("Vol_Regime")[f"Vol_{DEFAULT_VOLATILITY_WINDOW}d"]
         .mean()
     )
@@ -227,7 +228,9 @@ def compute_asset(raw: pd.DataFrame) -> AssetResults:
 
     reg_series = bt["Vol_Regime"].where(bt["Vol_Regime"].isin(["Low", "Normal", "High"]))
     transition_matrix = regime_analysis.compute_transition_matrix(reg_series)
-    transition_stats = regime_analysis.compute_transition_stats(bt["Strategy_Net_Return"], reg_series)
+    transition_stats = regime_analysis.compute_transition_stats(
+        bt["Strategy_Net_Return"], reg_series
+    )
 
     sensitivity = regime_analysis.compute_regime_sensitivity(strat_regime)
 
@@ -277,10 +280,24 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
 
     # Figure 1
     fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(spy.bt.index, spy.bt["Equity_Benchmark"], color=PALETTE["benchmark"], lw=2.0, label="Buy & Hold")
-    ax.plot(spy.bt.index, spy.bt["Equity_Strategy"], color=PALETTE["strategy"], lw=2.6, label="Trend Strategy")
+    ax.plot(
+        spy.bt.index,
+        spy.bt["Equity_Benchmark"],
+        color=PALETTE["benchmark"],
+        lw=2.0,
+        label="Buy & Hold",
+    )
+    ax.plot(
+        spy.bt.index,
+        spy.bt["Equity_Strategy"],
+        color=PALETTE["strategy"],
+        lw=2.6,
+        label="Trend Strategy",
+    )
     ax.set_yscale("log")
-    ax.set_title("Figure 1. Wealth Trajectory: Strategy vs Benchmark", loc="left", fontsize=16, pad=14)
+    ax.set_title(
+        "Figure 1. Wealth Trajectory: Strategy vs Benchmark", loc="left", fontsize=16, pad=14
+    )
     ax.set_ylabel("Cumulative growth (log scale)")
     ax.set_xlabel("Date")
     ax.grid(True, axis="y")
@@ -290,7 +307,9 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
         ("2020-02-20", "2020-05-01", "COVID"),
     ]:
         ax.axvspan(pd.Timestamp(start), pd.Timestamp(end), color="#f8d7d7", alpha=0.30)
-        ax.text(pd.Timestamp(start), ax.get_ylim()[1] / 1.25, label, fontsize=9, color=PALETTE["muted"])
+        ax.text(
+            pd.Timestamp(start), ax.get_ylim()[1] / 1.25, label, fontsize=9, color=PALETTE["muted"]
+        )
     ax.legend(frameon=False, loc="upper left")
     fig.tight_layout()
     fig.savefig(out_dir / "fig_equity_curves.png")
@@ -299,9 +318,17 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     # Figure 2
     fig, ax = plt.subplots(figsize=(12, 6))
     ax.fill_between(spy.bt.index, spy.bt["DD_Benchmark"], 0, color=PALETTE["benchmark"], alpha=0.22)
-    ax.plot(spy.bt.index, spy.bt["DD_Benchmark"], color=PALETTE["benchmark"], lw=1.8, label="Buy & Hold")
+    ax.plot(
+        spy.bt.index, spy.bt["DD_Benchmark"], color=PALETTE["benchmark"], lw=1.8, label="Buy & Hold"
+    )
     ax.fill_between(spy.bt.index, spy.bt["DD_Strategy"], 0, color=PALETTE["strategy"], alpha=0.20)
-    ax.plot(spy.bt.index, spy.bt["DD_Strategy"], color=PALETTE["strategy"], lw=2.2, label="Trend Strategy")
+    ax.plot(
+        spy.bt.index,
+        spy.bt["DD_Strategy"],
+        color=PALETTE["strategy"],
+        lw=2.2,
+        label="Trend Strategy",
+    )
     ax.set_title("Figure 2. Drawdown Geometry and Tail Truncation", loc="left", fontsize=16, pad=14)
     ax.set_ylabel("Drawdown")
     ax.set_xlabel("Date")
@@ -314,7 +341,12 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     # Figure 3
     freq = spy.regime_freq.reindex(["Low", "Normal", "High"])
     fig, ax = plt.subplots(figsize=(10, 5.5))
-    bars = ax.bar(freq.index, freq.values, color=[PALETTE["low"], PALETTE["normal"], PALETTE["high"]], width=0.58)
+    bars = ax.bar(
+        freq.index,
+        freq.values,
+        color=[PALETTE["low"], PALETTE["normal"], PALETTE["high"]],
+        width=0.58,
+    )
     ax.set_title("Figure 3. Volatility Regime Occupancy (OOS)", loc="left", fontsize=16, pad=14)
     ax.set_ylabel("Share of observations")
     ax.grid(True, axis="y")
@@ -332,15 +364,21 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     bench = [spy.bench_regime.loc[r, "Sharpe"] for r in regs]
     fig, ax = plt.subplots(figsize=(10, 6))
     for i in range(len(regs)):
-        ax.plot([bench[i], strat[i]], [y[i], y[i]], color=PALETTE["grid"], lw=5, solid_capstyle="round")
+        ax.plot(
+            [bench[i], strat[i]], [y[i], y[i]], color=PALETTE["grid"], lw=5, solid_capstyle="round"
+        )
     ax.scatter(bench, y, s=110, color=PALETTE["benchmark"], label="Buy & Hold")
     ax.scatter(strat, y, s=140, color=PALETTE["strategy"], label="Trend Strategy")
     for i in range(len(regs)):
-        ax.text(strat[i] + 0.03, y[i] + 0.04, num(strat[i], 2), color=PALETTE["strategy"], fontsize=10)
+        ax.text(
+            strat[i] + 0.03, y[i] + 0.04, num(strat[i], 2), color=PALETTE["strategy"], fontsize=10
+        )
     ax.set_yticks(y)
     ax.set_yticklabels(regs)
     ax.set_xlabel("Sharpe ratio")
-    ax.set_title("Figure 4. Regime-Conditional Risk-Adjusted Returns", loc="left", fontsize=16, pad=14)
+    ax.set_title(
+        "Figure 4. Regime-Conditional Risk-Adjusted Returns", loc="left", fontsize=16, pad=14
+    )
     ax.grid(True, axis="x")
     ax.legend(frameon=False, loc="lower right")
     fig.tight_layout()
@@ -348,13 +386,23 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     plt.close(fig)
 
     # Figure 5
-    tm = spy.transition_matrix.reindex(index=["Low", "Normal", "High"], columns=["Low", "Normal", "High"]).fillna(0)
+    tm = spy.transition_matrix.reindex(
+        index=["Low", "Normal", "High"], columns=["Low", "Normal", "High"]
+    ).fillna(0)
     fig, ax = plt.subplots(figsize=(8, 6.1))
     im = ax.imshow(tm.values, cmap="Blues", vmin=0, vmax=1)
     for i in range(tm.shape[0]):
         for j in range(tm.shape[1]):
             val = tm.values[i, j]
-            ax.text(j, i, f"{val:.2f}", ha="center", va="center", color=("white" if val > 0.65 else PALETTE["text"]), fontsize=11)
+            ax.text(
+                j,
+                i,
+                f"{val:.2f}",
+                ha="center",
+                va="center",
+                color=("white" if val > 0.65 else PALETTE["text"]),
+                fontsize=11,
+            )
     ax.set_xticks(range(3), tm.columns)
     ax.set_yticks(range(3), tm.index)
     ax.set_xlabel("Regime at t")
@@ -368,11 +416,20 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
 
     # Figure 6
     fig, ax = plt.subplots(figsize=(10.5, 6))
-    for reg, color in [("Low", PALETTE["low"]), ("Normal", PALETTE["normal"]), ("High", PALETTE["high"] )]:
+    for reg, color in [
+        ("Low", PALETTE["low"]),
+        ("Normal", PALETTE["normal"]),
+        ("High", PALETTE["high"]),
+    ]:
         if reg in spy.sweep_df.index.get_level_values("Regime"):
             s = spy.sweep_df.xs(reg, level="Regime")["Sharpe"]
             ax.plot(s.index, s.values, marker="o", lw=2.4, color=color, label=f"{reg} volatility")
-    ax.set_title("Figure 6. Parameter Robustness: SMA Window vs Regime Sharpe", loc="left", fontsize=16, pad=14)
+    ax.set_title(
+        "Figure 6. Parameter Robustness: SMA Window vs Regime Sharpe",
+        loc="left",
+        fontsize=16,
+        pad=14,
+    )
     ax.set_xlabel("SMA window (days)")
     ax.set_ylabel("Sharpe ratio")
     ax.grid(True)
@@ -392,14 +449,32 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
             s = data[asset].strat_metrics.get(metric, np.nan)
             color = [PALETTE["strategy"], "#5f8df7", "#8fb1ff"][i]
             ax.plot([0, 1], [b, s], marker="o", lw=2.8, color=color)
-            ax.text(-0.03, b, f"{asset} {num(b,2) if metric=='Sharpe' else pct(b)}", ha="right", va="center", color=PALETTE["muted"], fontsize=9)
-            ax.text(1.03, s, f"{num(s,2) if metric=='Sharpe' else pct(s)}", ha="left", va="center", color=color, fontsize=9)
+            ax.text(
+                -0.03,
+                b,
+                f"{asset} {num(b,2) if metric=='Sharpe' else pct(b)}",
+                ha="right",
+                va="center",
+                color=PALETTE["muted"],
+                fontsize=9,
+            )
+            ax.text(
+                1.03,
+                s,
+                f"{num(s,2) if metric=='Sharpe' else pct(s)}",
+                ha="left",
+                va="center",
+                color=color,
+                fontsize=9,
+            )
         ax.set_xticks([0, 1], ["Buy & Hold", "Trend"])
         ax.set_xlim(-0.45, 1.45)
         ax.grid(True, axis="y")
         ax.set_title(metric)
     axs[0].set_ylabel("Annualized metric")
-    fig.suptitle("Figure 7. Cross-Asset Robustness", x=0.04, ha="left", fontsize=16, weight="semibold")
+    fig.suptitle(
+        "Figure 7. Cross-Asset Robustness", x=0.04, ha="left", fontsize=16, weight="semibold"
+    )
     fig.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(out_dir / "fig_robustness_assets.png")
     plt.close(fig)
@@ -441,7 +516,9 @@ def fmt_pct(x, digits: int = 2) -> str:
     return f"{float(x) * 100:.{digits}f}%"
 
 
-def build_display_tables(inf_tables: dict[str, pd.DataFrame], rb_tables: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+def build_display_tables(
+    inf_tables: dict[str, pd.DataFrame], rb_tables: dict[str, pd.DataFrame]
+) -> dict[str, pd.DataFrame]:
     # A1: inference by regime
     a1 = inf_tables["inference_strategy_vs_benchmark_by_regime"].copy()
     a1 = a1.rename(
@@ -466,7 +543,9 @@ def build_display_tables(inf_tables: dict[str, pd.DataFrame], rb_tables: dict[st
 
     # A2: high minus normal
     a2 = inf_tables["inference_high_minus_normal"].copy()
-    a2 = a2.rename(columns={"diff": "Estimate", "ci_low": "CI Low", "ci_high": "CI High", "p_value": "p-value"})
+    a2 = a2.rename(
+        columns={"diff": "Estimate", "ci_low": "CI Low", "ci_high": "CI High", "p_value": "p-value"}
+    )
     a2 = a2.rename(
         index={
             "Sharpe_High_minus_Normal": "Sharpe (High - Normal)",
@@ -561,7 +640,9 @@ def build_robustness_tables(spy: AssetResults) -> dict[str, pd.DataFrame]:
     # A2: rebalance frequency sensitivity
     reb_rows = []
     for freq in ["D", "W", "M"]:
-        bt = backtester.run_backtest(df, "Signal_Trend", cost_bps=DEFAULT_COST_BPS / 10000, rebalance_freq=freq)
+        bt = backtester.run_backtest(
+            df, "Signal_Trend", cost_bps=DEFAULT_COST_BPS / 10000, rebalance_freq=freq
+        )
         sm = backtester.calculate_perf_metrics(bt["Equity_Strategy"])
         bm = backtester.calculate_perf_metrics(bt["Equity_Benchmark"])
         reb_rows.append(
@@ -593,7 +674,9 @@ def build_robustness_tables(spy: AssetResults) -> dict[str, pd.DataFrame]:
     )
 
     for col, name in [("Signal_Trend", "SMA50"), ("Signal_Trend_200", "SMA200")]:
-        bt = backtester.run_backtest(common, col, cost_bps=DEFAULT_COST_BPS / 10000, rebalance_freq="M")
+        bt = backtester.run_backtest(
+            common, col, cost_bps=DEFAULT_COST_BPS / 10000, rebalance_freq="M"
+        )
         sm = backtester.calculate_perf_metrics(bt["Equity_Strategy"])
         baseline_rows.append(
             {
@@ -620,8 +703,12 @@ def build_inference_tables(spy: AssetResults) -> dict[str, pd.DataFrame]:
     rows = []
     for reg in ["Low", "Normal", "High"]:
         sub = bt[bt["Vol_Regime"] == reg]
-        out_sharpe = bootstrap_diff_ci(sub["Strategy_Net_Return"], sub["Daily_Return"], ann_sharpe, n_boot=2000, seed=17)
-        out_cagr = bootstrap_diff_ci(sub["Strategy_Net_Return"], sub["Daily_Return"], cagr_from_returns, n_boot=2000, seed=19)
+        out_sharpe = bootstrap_diff_ci(
+            sub["Strategy_Net_Return"], sub["Daily_Return"], ann_sharpe, n_boot=2000, seed=17
+        )
+        out_cagr = bootstrap_diff_ci(
+            sub["Strategy_Net_Return"], sub["Daily_Return"], cagr_from_returns, n_boot=2000, seed=19
+        )
         rows.append(
             {
                 "Regime": reg,
@@ -714,8 +801,8 @@ def write_markdown(
 
     md = f"""# Volatility Regimes and Trend-Following Performance in U.S. Equities: An Empirical Deconstruction
 
-**Author:** Aarjav Ametha  
-**Date:** February 2026  
+**Author:** Aarjav Ametha
+**Date:** February 2026
 **Repository:** [github.com/aarjava/hedgefund-dashboard](https://github.com/aarjava/hedgefund-dashboard)
 
 ## Abstract
@@ -1041,8 +1128,12 @@ def write_arxiv_tex(
         digits=4,
     )
     b1 = df_to_latex_table(disp_tables["b1"], "Transaction cost sensitivity.", "tab:cost", digits=4)
-    b2 = df_to_latex_table(disp_tables["b2"], "Rebalance frequency sensitivity.", "tab:rebal", digits=4)
-    b3 = df_to_latex_table(disp_tables["b3"], "Baseline signal comparison.", "tab:baseline", digits=4)
+    b2 = df_to_latex_table(
+        disp_tables["b2"], "Rebalance frequency sensitivity.", "tab:rebal", digits=4
+    )
+    b3 = df_to_latex_table(
+        disp_tables["b3"], "Baseline signal comparison.", "tab:baseline", digits=4
+    )
 
     content = f"""\\pdfoutput=1
 \\documentclass[11pt]{{article}}
@@ -1289,7 +1380,9 @@ def save_tables(
         "main_transition_matrix.csv": spy.transition_matrix,
         "main_transition_stats.csv": spy.transition_stats,
         "main_robustness_assets.csv": robustness,
-        "appendix_inference_strategy_vs_benchmark_by_regime.csv": inf_tables["inference_strategy_vs_benchmark_by_regime"],
+        "appendix_inference_strategy_vs_benchmark_by_regime.csv": inf_tables[
+            "inference_strategy_vs_benchmark_by_regime"
+        ],
         "appendix_inference_high_minus_normal.csv": inf_tables["inference_high_minus_normal"],
         "appendix_cost_sensitivity.csv": rb_tables["appendix_cost_sensitivity"],
         "appendix_rebalance_sensitivity.csv": rb_tables["appendix_rebalance_sensitivity"],
@@ -1408,7 +1501,9 @@ def build_clean_arxiv_tarball(arxiv_dir: Path, tar_path: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--refresh", action="store_true", help="Refresh market data snapshot from yfinance")
+    parser.add_argument(
+        "--refresh", action="store_true", help="Refresh market data snapshot from yfinance"
+    )
     args = parser.parse_args()
 
     set_style()
@@ -1476,8 +1571,7 @@ def main() -> None:
 
     # Keep references file in arxiv dir (overwrite for deterministic, research-grade cites)
     ref = arxiv_dir / "references.bib"
-    ref.write_text(
-        """@article{brock1992simple,
+    ref.write_text("""@article{brock1992simple,
   title={Simple Technical Trading Rules and the Stochastic Properties of Stock Returns},
   author={Brock, William and Lakonishok, Josef and LeBaron, Blake},
   journal={The Journal of Finance},
@@ -1527,8 +1621,7 @@ def main() -> None:
   publisher={McGraw-Hill},
   year={2014}
 }
-"""
-    )
+""")
     write_arxiv_submission_notes(arxiv_dir)
 
     # Sync figures everywhere used
@@ -1548,7 +1641,9 @@ def main() -> None:
         shutil.copy2(f, gem_tables / f.name)
 
     # Update gemini manuscript from live markdown summary by keeping canonical tex
-    shutil.copy2(arxiv_dir / "main.tex", REPO / "output" / "gemini_paper_repo" / "manuscript" / "main.tex")
+    shutil.copy2(
+        arxiv_dir / "main.tex", REPO / "output" / "gemini_paper_repo" / "manuscript" / "main.tex"
+    )
 
     # Compile arxiv tex and refresh bundle
     subprocess.run(
