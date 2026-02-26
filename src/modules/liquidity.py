@@ -2,9 +2,8 @@
 Liquidity analytics utilities.
 """
 
-from typing import Dict
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def compute_liquidity_metrics(
@@ -44,12 +43,14 @@ def compute_liquidity_metrics(
     # Avoid division by zero
     dttl = position_value / (latest_adv * adv_pct)
 
-    out = pd.DataFrame({
-        "Price": latest_prices,
-        "Weight": aligned_weights,
-        "PositionValue": position_value,
-        "ADV$": latest_adv,
-        "DaysToLiquidate": dttl,
-    })
+    out = pd.DataFrame(
+        {
+            "Price": latest_prices,
+            "Weight": aligned_weights,
+            "PositionValue": position_value,
+            "ADV$": latest_adv,
+            "DaysToLiquidate": dttl,
+        }
+    )
 
     return out.replace([np.inf, -np.inf], np.nan)
