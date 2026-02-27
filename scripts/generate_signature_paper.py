@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -11,8 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yfinance as yf
-
-import sys
 
 REPO = Path("/Users/aarjavametha/Desktop/Projects/hedgefund-dashboard")
 sys.path.insert(0, str(REPO))
@@ -25,9 +24,9 @@ from src.modules.config import (  # noqa: E402
     DEFAULT_REBALANCE_FREQ,
     DEFAULT_SMA_SWEEP,
     DEFAULT_SMA_WINDOW,
-    DEFAULT_VOLATILITY_WINDOW,
     DEFAULT_VOL_QUANTILE_HIGH,
     DEFAULT_VOL_QUANTILE_LOW,
+    DEFAULT_VOLATILITY_WINDOW,
 )
 
 
@@ -139,7 +138,10 @@ def compute_asset(df: pd.DataFrame) -> AssetResults:
     bench_regime = backtester.calculate_regime_stats(bt_valid, "Daily_Return", "Vol_Regime")
 
     avg_vol = (
-        df.loc[df["Vol_Regime"].isin(["Low", "Normal", "High"]), [f"Vol_{DEFAULT_VOLATILITY_WINDOW}d", "Vol_Regime"]]
+        df.loc[
+            df["Vol_Regime"].isin(["Low", "Normal", "High"]),
+            [f"Vol_{DEFAULT_VOLATILITY_WINDOW}d", "Vol_Regime"],
+        ]
         .groupby("Vol_Regime")[f"Vol_{DEFAULT_VOLATILITY_WINDOW}d"]
         .mean()
     )
@@ -149,11 +151,16 @@ def compute_asset(df: pd.DataFrame) -> AssetResults:
 
     reg_series = bt["Vol_Regime"].where(bt["Vol_Regime"].isin(["Low", "Normal", "High"]))
     transition_matrix = regime_analysis.compute_transition_matrix(reg_series)
-    transition_stats = regime_analysis.compute_transition_stats(bt["Strategy_Net_Return"], reg_series)
+    transition_stats = regime_analysis.compute_transition_stats(
+        bt["Strategy_Net_Return"], reg_series
+    )
 
     sensitivity = regime_analysis.compute_regime_sensitivity(strat_regime)
     bootstrap = regime_analysis.bootstrap_regime_diff(
-        bt_valid["Strategy_Net_Return"], bt_valid["Vol_Regime"], metric="Sharpe", n_boot=DEFAULT_BOOTSTRAP_ITER
+        bt_valid["Strategy_Net_Return"],
+        bt_valid["Vol_Regime"],
+        metric="Sharpe",
+        n_boot=DEFAULT_BOOTSTRAP_ITER,
     )
 
     walk_forward = backtester.walk_forward_backtest(
@@ -209,11 +216,25 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
 
     # Figure 1: Equity curves
     fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(spy.bt.index, spy.bt["Equity_Benchmark"], color=PALETTE["benchmark"], lw=2.0, label="Buy & Hold")
-    ax.plot(spy.bt.index, spy.bt["Equity_Strategy"], color=PALETTE["strategy"], lw=2.4, label="Trend Strategy")
+    ax.plot(
+        spy.bt.index,
+        spy.bt["Equity_Benchmark"],
+        color=PALETTE["benchmark"],
+        lw=2.0,
+        label="Buy & Hold",
+    )
+    ax.plot(
+        spy.bt.index,
+        spy.bt["Equity_Strategy"],
+        color=PALETTE["strategy"],
+        lw=2.4,
+        label="Trend Strategy",
+    )
     ax.set_yscale("log")
     ax.grid(True, axis="y")
-    ax.set_title("Figure 1. Wealth Trajectory: Strategy vs Benchmark", loc="left", fontsize=16, pad=14)
+    ax.set_title(
+        "Figure 1. Wealth Trajectory: Strategy vs Benchmark", loc="left", fontsize=16, pad=14
+    )
     ax.set_ylabel("Cumulative growth (log scale)")
     ax.set_xlabel("Date")
     crises = [
@@ -223,7 +244,9 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     ]
     for start, end, label in crises:
         ax.axvspan(pd.Timestamp(start), pd.Timestamp(end), color="#f4d4d4", alpha=0.35)
-        ax.text(pd.Timestamp(start), ax.get_ylim()[1] / 1.25, label, fontsize=9, color=PALETTE["muted"])
+        ax.text(
+            pd.Timestamp(start), ax.get_ylim()[1] / 1.25, label, fontsize=9, color=PALETTE["muted"]
+        )
     ax.legend(frameon=False, loc="upper left")
     fig.tight_layout()
     fig.savefig(out_dir / "fig_equity_curves.png")
@@ -232,10 +255,20 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     # Figure 2: Drawdowns
     fig, ax = plt.subplots(figsize=(12, 6))
     ax.fill_between(spy.bt.index, spy.bt["DD_Benchmark"], 0, color=PALETTE["benchmark"], alpha=0.22)
-    ax.plot(spy.bt.index, spy.bt["DD_Benchmark"], color=PALETTE["benchmark"], lw=1.8, label="Buy & Hold")
+    ax.plot(
+        spy.bt.index, spy.bt["DD_Benchmark"], color=PALETTE["benchmark"], lw=1.8, label="Buy & Hold"
+    )
     ax.fill_between(spy.bt.index, spy.bt["DD_Strategy"], 0, color=PALETTE["strategy"], alpha=0.20)
-    ax.plot(spy.bt.index, spy.bt["DD_Strategy"], color=PALETTE["strategy"], lw=2.0, label="Trend Strategy")
-    ax.set_title("Figure 2. Drawdown Decomposition: Left-tail Truncation", loc="left", fontsize=16, pad=14)
+    ax.plot(
+        spy.bt.index,
+        spy.bt["DD_Strategy"],
+        color=PALETTE["strategy"],
+        lw=2.0,
+        label="Trend Strategy",
+    )
+    ax.set_title(
+        "Figure 2. Drawdown Decomposition: Left-tail Truncation", loc="left", fontsize=16, pad=14
+    )
     ax.set_ylabel("Drawdown")
     ax.set_xlabel("Date")
     ax.grid(True, axis="y")
@@ -249,12 +282,25 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     colors = [PALETTE["low"], PALETTE["normal"], PALETTE["high"]]
     fig, ax = plt.subplots(figsize=(10, 5.5))
     bars = ax.bar(freq.index, freq.values, color=colors, width=0.58)
-    ax.set_title("Figure 3. Volatility Regime Occupancy (OOS Classification)", loc="left", fontsize=16, pad=14)
+    ax.set_title(
+        "Figure 3. Volatility Regime Occupancy (OOS Classification)",
+        loc="left",
+        fontsize=16,
+        pad=14,
+    )
     ax.set_ylabel("Share of observations")
     ax.set_ylim(0, max(freq.values) * 1.3)
     ax.grid(True, axis="y")
     for b, v in zip(bars, freq.values):
-        ax.text(b.get_x() + b.get_width() / 2, v + 0.008, f"{v*100:.1f}%", ha="center", va="bottom", color=PALETTE["text"], fontsize=11)
+        ax.text(
+            b.get_x() + b.get_width() / 2,
+            v + 0.008,
+            f"{v*100:.1f}%",
+            ha="center",
+            va="bottom",
+            color=PALETTE["text"],
+            fontsize=11,
+        )
     fig.tight_layout()
     fig.savefig(out_dir / "fig_regime_frequency.png")
     plt.close(fig)
@@ -266,17 +312,23 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     bench = [spy.bench_regime.loc[r, "Sharpe"] for r in regs]
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    for i, r in enumerate(regs):
-        ax.plot([bench[i], strat[i]], [y[i], y[i]], color=PALETTE["grid"], lw=5, solid_capstyle="round")
+    for i, _r in enumerate(regs):
+        ax.plot(
+            [bench[i], strat[i]], [y[i], y[i]], color=PALETTE["grid"], lw=5, solid_capstyle="round"
+        )
     ax.scatter(bench, y, s=115, color=PALETTE["benchmark"], label="Buy & Hold", zorder=3)
     ax.scatter(strat, y, s=145, color=PALETTE["strategy"], label="Trend Strategy", zorder=4)
     for i in range(len(regs)):
-        ax.text(strat[i] + 0.03, y[i] + 0.03, num(strat[i], 2), color=PALETTE["strategy"], fontsize=10)
+        ax.text(
+            strat[i] + 0.03, y[i] + 0.03, num(strat[i], 2), color=PALETTE["strategy"], fontsize=10
+        )
         ax.text(bench[i] - 0.15, y[i] - 0.18, num(bench[i], 2), color=PALETTE["muted"], fontsize=9)
     ax.set_yticks(y)
     ax.set_yticklabels(regs)
     ax.set_xlabel("Sharpe ratio")
-    ax.set_title("Figure 4. Regime-Conditional Risk-Adjusted Returns", loc="left", fontsize=16, pad=14)
+    ax.set_title(
+        "Figure 4. Regime-Conditional Risk-Adjusted Returns", loc="left", fontsize=16, pad=14
+    )
     ax.grid(True, axis="x")
     ax.legend(frameon=False, loc="lower right")
     fig.tight_layout()
@@ -284,18 +336,33 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     plt.close(fig)
 
     # Figure 5: Transition matrix heatmap
-    tm = spy.transition_matrix.reindex(index=["Low", "Normal", "High"], columns=["Low", "Normal", "High"]).fillna(0)
+    tm = spy.transition_matrix.reindex(
+        index=["Low", "Normal", "High"], columns=["Low", "Normal", "High"]
+    ).fillna(0)
     fig, ax = plt.subplots(figsize=(8, 6.2))
     im = ax.imshow(tm.values, cmap="Blues", vmin=0, vmax=1)
     for i in range(tm.shape[0]):
         for j in range(tm.shape[1]):
             val = tm.values[i, j]
-            ax.text(j, i, f"{val:.2f}", ha="center", va="center", color=("white" if val > 0.65 else PALETTE["text"]), fontsize=11)
+            ax.text(
+                j,
+                i,
+                f"{val:.2f}",
+                ha="center",
+                va="center",
+                color=("white" if val > 0.65 else PALETTE["text"]),
+                fontsize=11,
+            )
     ax.set_xticks(range(3), tm.columns)
     ax.set_yticks(range(3), tm.index)
     ax.set_xlabel("Regime at t")
     ax.set_ylabel("Regime at t-1")
-    ax.set_title("Figure 5. Regime Transition Matrix (Persistence Structure)", loc="left", fontsize=16, pad=14)
+    ax.set_title(
+        "Figure 5. Regime Transition Matrix (Persistence Structure)",
+        loc="left",
+        fontsize=16,
+        pad=14,
+    )
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     cbar.set_label("Transition probability")
     fig.tight_layout()
@@ -305,13 +372,24 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
     # Figure 6: SMA sweep
     fig, ax = plt.subplots(figsize=(10.5, 6))
     if spy.sweep_df is not None and not spy.sweep_df.empty:
-        for reg, color in [("Low", PALETTE["low"]), ("Normal", PALETTE["normal"]), ("High", PALETTE["high"])]:
+        for reg, color in [
+            ("Low", PALETTE["low"]),
+            ("Normal", PALETTE["normal"]),
+            ("High", PALETTE["high"]),
+        ]:
             if reg in spy.sweep_df.index.get_level_values("Regime"):
                 series = spy.sweep_df.xs(reg, level="Regime")["Sharpe"]
-                ax.plot(series.index, series.values, marker="o", lw=2.5, color=color, label=f"{reg} vol")
+                ax.plot(
+                    series.index, series.values, marker="o", lw=2.5, color=color, label=f"{reg} vol"
+                )
                 for x, yv in zip(series.index, series.values):
                     ax.text(x, yv + 0.03, num(yv, 2), color=color, fontsize=8, ha="center")
-    ax.set_title("Figure 6. Parameter Robustness: SMA Window vs Regime Sharpe", loc="left", fontsize=16, pad=14)
+    ax.set_title(
+        "Figure 6. Parameter Robustness: SMA Window vs Regime Sharpe",
+        loc="left",
+        fontsize=16,
+        pad=14,
+    )
     ax.set_xlabel("SMA window (days)")
     ax.set_ylabel("Sharpe ratio")
     ax.grid(True)
@@ -333,15 +411,37 @@ def make_figures(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, out_di
             color = [PALETTE["strategy"], "#5d9cec", "#9ab8ff"][i]
             y = len(assets) - i
             ax.plot([0, 1], [b, s], color=color, lw=2.8, marker="o")
-            ax.text(-0.02, b, f"{a} {num(b, 2) if metric == 'Sharpe' else pct(b)}", ha="right", va="center", fontsize=9, color=PALETTE["muted"])
-            ax.text(1.02, s, f"{num(s, 2) if metric == 'Sharpe' else pct(s)}", ha="left", va="center", fontsize=9, color=color)
+            ax.text(
+                -0.02,
+                b,
+                f"{a} {num(b, 2) if metric == 'Sharpe' else pct(b)}",
+                ha="right",
+                va="center",
+                fontsize=9,
+                color=PALETTE["muted"],
+            )
+            ax.text(
+                1.02,
+                s,
+                f"{num(s, 2) if metric == 'Sharpe' else pct(s)}",
+                ha="left",
+                va="center",
+                fontsize=9,
+                color=color,
+            )
         ax.set_xticks([0, 1], ["Buy & Hold", "Trend"])
         ax.set_xlim(-0.45, 1.45)
         ax.grid(True, axis="y")
         ax.set_title("CAGR" if metric == "CAGR" else "Sharpe")
         if metric == "CAGR":
             ax.set_ylabel("Annualized return")
-    fig.suptitle("Figure 7. Cross-Asset Robustness: Benchmark vs Strategy", x=0.04, ha="left", fontsize=16, weight="semibold")
+    fig.suptitle(
+        "Figure 7. Cross-Asset Robustness: Benchmark vs Strategy",
+        x=0.04,
+        ha="left",
+        fontsize=16,
+        weight="semibold",
+    )
     fig.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(out_dir / "fig_robustness_assets.png")
     plt.close(fig)
@@ -361,7 +461,11 @@ def write_paper(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, md_path
 
     best_normal_window = "N/A"
     best_normal_val = np.nan
-    if spy.sweep_df is not None and not spy.sweep_df.empty and ("Normal" in spy.sweep_df.index.get_level_values("Regime")):
+    if (
+        spy.sweep_df is not None
+        and not spy.sweep_df.empty
+        and ("Normal" in spy.sweep_df.index.get_level_values("Regime"))
+    ):
         normal_series = spy.sweep_df.xs("Normal", level="Regime")["Sharpe"]
         idxmax = normal_series.idxmax()
         best_normal_window = str(int(idxmax))
@@ -369,8 +473,8 @@ def write_paper(spy: AssetResults, qqq: AssetResults, iwm: AssetResults, md_path
 
     text = f"""# Volatility Regimes and Trend-Following Performance in U.S. Equities: A Visual Deconstruction
 
-**Author:** Aarjav Ametha  
-**Date:** February 2026  
+**Author:** Aarjav Ametha
+**Date:** February 2026
 **Repository:** [github.com/aarjava/hedgefund-dashboard](https://github.com/aarjava/hedgefund-dashboard)
 
 ## Abstract
@@ -388,19 +492,19 @@ The baseline trade-off is visible immediately: strategy CAGR `{pct(sm.get('CAGR'
 ## 2. Wealth Path Decomposition
 ![Figure 1: SPY Equity Curves (Log Scale)](output/figures/fig_equity_curves.png)
 
-*Figure 1: SPY Equity Curves (Log Scale).*  
+*Figure 1: SPY Equity Curves (Log Scale).*
 The strategy decouples from major crash legs, but loses compounding speed during prolonged bull phases due to lagged re-entry after corrections.
 
 ## 3. Left-Tail Geometry and Recovery Burden
 ![Figure 2: SPY Drawdown Curves](output/figures/fig_drawdowns.png)
 
-*Figure 2: SPY Drawdown Curves.*  
+*Figure 2: SPY Drawdown Curves.*
 Risk control is the dominant contribution. The strategy's lower depth and shorter severe underwater episodes improve survivability for leverage-constrained or drawdown-sensitive mandates.
 
 ## 4. State Occupancy Matters
 ![Figure 3: Regime Frequency (SPY, OOS)](output/figures/fig_regime_frequency.png)
 
-*Figure 3: Regime Frequency (SPY, OOS).*  
+*Figure 3: Regime Frequency (SPY, OOS).*
 Regime frequency determines where performance can realistically accumulate. Strong behavior in an infrequent regime cannot drive headline return alone.
 
 ## 5. Regime Asymmetry (Where the Signal Works)
