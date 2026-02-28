@@ -801,8 +801,8 @@ def write_markdown(
 
     md = f"""# Volatility Regimes and Trend-Following Performance in U.S. Equities: An Empirical Deconstruction
 
-**Author:** Aarjav Ametha  
-**Date:** February 2026  
+**Author:** Aarjav Ametha
+**Date:** February 2026
 **Repository:** [github.com/aarjava/hedgefund-dashboard](https://github.com/aarjava/hedgefund-dashboard)
 
 ## Abstract
