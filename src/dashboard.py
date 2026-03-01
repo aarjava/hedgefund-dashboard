@@ -170,7 +170,10 @@ with st.sidebar:
     else:
         factor_window = st.slider("Factor Beta Window (days)", 20, 252, 63, 7)
         vol_window = st.slider("Regime Vol Window (days)", 10, 60, 21, 5)
-        adv_pct = st.slider("ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01)
+        adv_pct = st.slider(
+            "ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01,
+            help="Maximum allowed participation of Average Daily Volume. E.g., 0.10 = 10% of daily volume."
+        )
 
     st.markdown("---")
     st.subheader("4. Research Rigor")
@@ -185,19 +188,35 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
 
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05,
+        help="Quantile threshold defining high volatility. E.g., 0.75 = 75th percentile."
     )
 
     if mode == "Single-Asset":
         st.subheader("5. Backtest Settings")
-        bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
+        bt_cost = st.number_input(
+            "Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1,
+            help="Estimated cost per trade in basis points. E.g., 10 bps = 0.10%."
+        ) / 10000
         allow_short = st.checkbox("Allow Short Selling?", value=False)
     else:
         st.subheader("5. Alert Thresholds")
-        dd_alert = st.slider("Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05)
-        vol_alert = st.slider("Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05)
-        beta_alert = st.slider("Beta Alert", 0.5, 2.0, 1.3, 0.1)
-        dttl_alert = st.slider("Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0)
+        dd_alert = st.slider(
+            "Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05,
+            help="Threshold for max drawdown. E.g., -0.2 = 20% loss from peak."
+        )
+        vol_alert = st.slider(
+            "Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05,
+            help="Threshold for annualized volatility. E.g., 0.35 = 35% annualized volatility."
+        )
+        beta_alert = st.slider(
+            "Beta Alert", 0.5, 2.0, 1.3, 0.1,
+            help="Threshold for portfolio beta to the market. E.g., 1.3 = 30% more volatile than market."
+        )
+        dttl_alert = st.slider(
+            "Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0,
+            help="Threshold for days to liquidate positions at max ADV participation."
+        )
 
 
 # --- Portfolio Mode ---
