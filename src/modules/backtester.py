@@ -10,11 +10,12 @@ Features:
 - Walk-forward validation
 """
 
-import pandas as pd
-import numpy as np
 import logging
-from typing import Literal, Optional, Dict, Any, Tuple, List
 from dataclasses import dataclass
+from typing import Any, Dict, List, Literal, Optional, Tuple
+
+import numpy as np
+import pandas as pd
 
 try:
     from .config import TRADING_DAYS_PER_YEAR
@@ -181,7 +182,7 @@ def calculate_perf_metrics(
         logger.warning(f"Could not calculate period: {e}")
         years = 1
 
-    total_return = equity_curve.iloc[-1] - 1
+    equity_curve.iloc[-1] - 1
     cagr = (equity_curve.iloc[-1]) ** (1 / years) - 1
 
     # Volatility
@@ -460,7 +461,7 @@ def walk_forward_backtest(
         train_mask = df["YearMonth"].isin(train_months_range)
         test_mask = df["YearMonth"].isin(test_months_range)
 
-        train_df = df[train_mask].copy()
+        df[train_mask].copy()
         test_df = df[test_mask].copy()
 
         if len(test_df) == 0:
