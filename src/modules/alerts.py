@@ -3,8 +3,9 @@ Alerting and anomaly detection utilities.
 """
 
 from typing import Dict
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 
 def evaluate_alerts(metrics: Dict[str, float], thresholds: Dict[str, Dict]) -> pd.DataFrame:

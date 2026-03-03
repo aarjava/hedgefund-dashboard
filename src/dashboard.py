@@ -1,75 +1,76 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
-from datetime import datetime, timedelta
 import hashlib
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 
 # Import custom modules
 try:
     from modules import (
-        data_model,
-        signals,
-        backtester,
-        portfolio,
-        risk,
-        factors,
-        scenario,
-        liquidity,
         alerts,
-        reporting,
+        backtester,
+        data_model,
+        factors,
+        liquidity,
+        portfolio,
         regime_analysis,
+        reporting,
+        risk,
+        scenario,
+        signals,
         sweep,
     )
     from modules.config import (
-        PRESET_UNIVERSE,
-        DEFAULT_SMA_WINDOW,
-        DEFAULT_MOMENTUM_WINDOW,
-        DEFAULT_VOL_QUANTILE_HIGH,
-        DEFAULT_COST_BPS,
-        MIN_DATA_POINTS,
-        DEFAULT_BENCHMARK,
-        DEFAULT_PORTFOLIO_VALUE,
         DEFAULT_ADV_PCT,
+        DEFAULT_BENCHMARK,
+        DEFAULT_BOOTSTRAP_ITER,
+        DEFAULT_COST_BPS,
+        DEFAULT_MOMENTUM_WINDOW,
+        DEFAULT_PORTFOLIO_VALUE,
+        DEFAULT_SMA_SWEEP,
+        DEFAULT_SMA_WINDOW,
+        DEFAULT_VOL_QUANTILE_HIGH,
         FACTOR_PROXIES,
         MACRO_PROXIES,
-        DEFAULT_BOOTSTRAP_ITER,
-        DEFAULT_SMA_SWEEP,
+        MIN_DATA_POINTS,
+        PRESET_UNIVERSE,
     )
 except ImportError:
-    import sys
     import os
+    import sys
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from src.modules import (
-        data_model,
-        signals,
-        backtester,
-        portfolio,
-        risk,
-        factors,
-        scenario,
-        liquidity,
         alerts,
-        reporting,
+        backtester,
+        data_model,
+        factors,
+        liquidity,
+        portfolio,
         regime_analysis,
+        reporting,
+        risk,
+        scenario,
+        signals,
         sweep,
     )
     from src.modules.config import (
-        PRESET_UNIVERSE,
-        DEFAULT_SMA_WINDOW,
-        DEFAULT_MOMENTUM_WINDOW,
-        DEFAULT_VOL_QUANTILE_HIGH,
-        DEFAULT_COST_BPS,
-        MIN_DATA_POINTS,
-        DEFAULT_BENCHMARK,
-        DEFAULT_PORTFOLIO_VALUE,
         DEFAULT_ADV_PCT,
+        DEFAULT_BENCHMARK,
+        DEFAULT_BOOTSTRAP_ITER,
+        DEFAULT_COST_BPS,
+        DEFAULT_MOMENTUM_WINDOW,
+        DEFAULT_PORTFOLIO_VALUE,
+        DEFAULT_SMA_SWEEP,
+        DEFAULT_SMA_WINDOW,
+        DEFAULT_VOL_QUANTILE_HIGH,
         FACTOR_PROXIES,
         MACRO_PROXIES,
-        DEFAULT_BOOTSTRAP_ITER,
-        DEFAULT_SMA_SWEEP,
+        MIN_DATA_POINTS,
+        PRESET_UNIVERSE,
     )
 
 
@@ -533,7 +534,7 @@ if mode == "Portfolio":
         fig_eq = go.Figure()
         fig_eq.add_trace(
             go.Scatter(
-                x=port_equity.index, y=port_equity, name="Portfolio", line=dict(color="#00ff00")
+                x=port_equity.index, y=port_equity, name="Portfolio", line={"color": "#00ff00"}
             )
         )
         if not benchmark_returns.empty:
@@ -543,7 +544,7 @@ if mode == "Portfolio":
                     x=bench_equity.index,
                     y=bench_equity,
                     name=benchmark_ticker,
-                    line=dict(color="#888"),
+                    line={"color": "#888"},
                 )
             )
         fig_eq.update_layout(template="plotly_dark", height=420)
@@ -586,7 +587,7 @@ if mode == "Portfolio":
                 y=dd_series * 100,
                 name="Drawdown",
                 fill="tozeroy",
-                line=dict(color="#ff4b4b"),
+                line={"color": "#ff4b4b"},
             )
         )
         fig_dd.update_layout(template="plotly_dark", height=300, yaxis_title="Drawdown (%)")
@@ -634,7 +635,7 @@ if mode == "Portfolio":
             fig_alpha = go.Figure()
             fig_alpha.add_trace(
                 go.Scatter(
-                    x=alpha_series.index, y=alpha_series, name="Alpha", line=dict(color="#00ff00")
+                    x=alpha_series.index, y=alpha_series, name="Alpha", line={"color": "#00ff00"}
                 )
             )
             fig_alpha.update_layout(template="plotly_dark", height=300)
@@ -686,7 +687,7 @@ if mode == "Portfolio":
             st.subheader("Rolling IC (Signal vs 1M Forward Return)")
             ic = bench_tmp["Signal"].rolling(63).corr(bench_tmp["Fwd_21"])
             fig_ic = go.Figure()
-            fig_ic.add_trace(go.Scatter(x=ic.index, y=ic, name="IC", line=dict(color="#ff9f43")))
+            fig_ic.add_trace(go.Scatter(x=ic.index, y=ic, name="IC", line={"color": "#ff9f43"}))
             fig_ic.update_layout(template="plotly_dark", height=300)
             st.plotly_chart(fig_ic, use_container_width=True)
 
@@ -863,14 +864,16 @@ with tab_ov:
     # Interactive Price Chart
     fig = go.Figure()
     fig.add_trace(
-        go.Scatter(x=df.index, y=df["Close"], name="Close Price", line=dict(color="white", width=1))
+        go.Scatter(
+            x=df.index, y=df["Close"], name="Close Price", line={"color": "white", "width": 1}
+        )
     )
     fig.add_trace(
         go.Scatter(
             x=df.index,
             y=df[f"SMA_{sma_window}"],
             name=f"{sma_window}-Day SMA",
-            line=dict(color="#ff9f43", width=1),
+            line={"color": "#ff9f43", "width": 1},
         )
     )
 
@@ -886,7 +889,7 @@ with tab_ov:
             y=high_vol_pts["Close"],
             mode="markers",
             name="High Volatility",
-            marker=dict(color="red", size=2),
+            marker={"color": "red", "size": 2},
         )
     )
 
@@ -1047,7 +1050,7 @@ with tab_bt:
                 x=res_df.index,
                 y=res_df["Equity_Strategy"],
                 name="Trend Strategy",
-                line=dict(color="#00ff00"),
+                line={"color": "#00ff00"},
             )
         )
         fig_eq.add_trace(
@@ -1055,7 +1058,7 @@ with tab_bt:
                 x=res_df.index,
                 y=res_df["Equity_Benchmark"],
                 name="Buy & Hold",
-                line=dict(color="gray", dash="dot"),
+                line={"color": "gray", "dash": "dot"},
             )
         )
         fig_eq.update_layout(title="Equity Curve", template="plotly_dark", height=400)
@@ -1070,7 +1073,7 @@ with tab_bt:
                     y=res_df["DD_Strategy"] * 100,
                     name="Strategy Drawdown",
                     fill="tozeroy",
-                    line=dict(color="#ff4b4b"),
+                    line={"color": "#ff4b4b"},
                 )
             )
             fig_dd.add_trace(
@@ -1078,7 +1081,7 @@ with tab_bt:
                     x=res_df.index,
                     y=res_df["DD_Benchmark"] * 100,
                     name="Benchmark Drawdown",
-                    line=dict(color="gray", dash="dot"),
+                    line={"color": "gray", "dash": "dot"},
                 )
             )
             fig_dd.update_layout(
@@ -1124,7 +1127,7 @@ with tab_bt:
         # 5. Walk-Forward Validation (Advanced)
         with st.expander("🚀 Walk-Forward Validation (Advanced)", expanded=False):
             st.markdown("""
-            Walk-forward validation splits data into rolling train/test windows to evaluate 
+            Walk-forward validation splits data into rolling train/test windows to evaluate
             out-of-sample performance. This is more rigorous than a single full-sample backtest.
             """)
 
