@@ -141,7 +141,8 @@ with st.sidebar:
         portfolio_value = st.number_input(
             "Portfolio Value (USD)",
             value=float(DEFAULT_PORTFOLIO_VALUE),
-            step=100000.0
+            step=100000.0,
+            help="Total initial capital allocated to the portfolio (e.g., 1000000 = $1,000,000)."
         )
         benchmark_ticker = st.text_input("Benchmark Ticker", value=DEFAULT_BENCHMARK).upper()
 
@@ -168,9 +169,9 @@ with st.sidebar:
             help="Lookback months for Momentum signal."
         )
     else:
-        factor_window = st.slider("Factor Beta Window (days)", 20, 252, 63, 7)
-        vol_window = st.slider("Regime Vol Window (days)", 10, 60, 21, 5)
-        adv_pct = st.slider("ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01)
+        factor_window = st.slider("Factor Beta Window (days)", 20, 252, 63, 7, help="Lookback period for computing factor betas (e.g., 63 days = ~3 months).")
+        vol_window = st.slider("Regime Vol Window (days)", 10, 60, 21, 5, help="Lookback period for computing regime volatility (e.g., 21 days = ~1 month).")
+        adv_pct = st.slider("ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01, help="Average Daily Volume participation limit (e.g., 0.10 = 10% of ADV).")
 
     st.markdown("---")
     st.subheader("4. Research Rigor")
@@ -185,19 +186,20 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
 
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05,
+        help="Threshold for high volatility regime (e.g., 0.80 = 80th percentile and above)."
     )
 
     if mode == "Single-Asset":
         st.subheader("5. Backtest Settings")
-        bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
+        bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1, help="Trading cost per transaction in basis points (e.g., 10 bps = 0.10%).") / 10000
         allow_short = st.checkbox("Allow Short Selling?", value=False)
     else:
         st.subheader("5. Alert Thresholds")
-        dd_alert = st.slider("Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05)
-        vol_alert = st.slider("Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05)
-        beta_alert = st.slider("Beta Alert", 0.5, 2.0, 1.3, 0.1)
-        dttl_alert = st.slider("Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0)
+        dd_alert = st.slider("Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05, help="Alert threshold for maximum portfolio drawdown (e.g., -0.20 = -20% drawdown).")
+        vol_alert = st.slider("Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05, help="Alert threshold for annualized portfolio volatility (e.g., 0.35 = 35% volatility).")
+        beta_alert = st.slider("Beta Alert", 0.5, 2.0, 1.3, 0.1, help="Alert threshold for portfolio beta relative to benchmark (e.g., 1.3 = 30% more volatile than benchmark).")
+        dttl_alert = st.slider("Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0, help="Alert threshold for maximum days to liquidate positions based on ADV (e.g., 5.0 = 5 days).")
 
 
 # --- Portfolio Mode ---

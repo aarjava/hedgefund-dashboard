@@ -1,0 +1,3 @@
+## 2024-05-14 - Add tooltips with concrete examples to statistical inputs
+**Learning:** For statistical or financial parameters (e.g., basis points, quantiles), abstract tooltips or no tooltips are insufficient for users to gauge scale or format. Providing concrete examples directly in the widget `help` attribute significantly improves data entry accuracy and understanding.
+**Action:** Consistently include concrete examples (e.g., "10 bps = 0.10%") within the `help` parameter of `st.slider` and `st.number_input` widgets dealing with specific numerical concepts.
