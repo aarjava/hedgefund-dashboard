@@ -170,7 +170,14 @@ with st.sidebar:
     else:
         factor_window = st.slider("Factor Beta Window (days)", 20, 252, 63, 7)
         vol_window = st.slider("Regime Vol Window (days)", 10, 60, 21, 5)
-        adv_pct = st.slider("ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01)
+        adv_pct = st.slider(
+            "ADV Participation %",
+            0.01,
+            0.30,
+            float(DEFAULT_ADV_PCT),
+            0.01,
+            help="Max daily volume to trade (e.g., 0.10 = 10%)",
+        )
 
     st.markdown("---")
     st.subheader("4. Research Rigor")
@@ -185,12 +192,25 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
 
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+        "High Volatility Quantile",
+        0.5,
+        0.95,
+        DEFAULT_VOL_QUANTILE_HIGH,
+        0.05,
+        help="Threshold for top X% of volatility (e.g., 0.80 = top 20%)",
     )
 
     if mode == "Single-Asset":
         st.subheader("5. Backtest Settings")
-        bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
+        bt_cost = (
+            st.number_input(
+                "Transaction Cost (bps)",
+                value=DEFAULT_COST_BPS,
+                step=1,
+                help="Trading cost per turn (e.g., 10 bps = 0.10%)",
+            )
+            / 10000
+        )
         allow_short = st.checkbox("Allow Short Selling?", value=False)
     else:
         st.subheader("5. Alert Thresholds")
