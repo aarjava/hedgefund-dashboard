@@ -198,7 +198,7 @@ with st.sidebar:
     use_oos = st.toggle(
         "Out-of-Sample Mode",
         value=False,
-        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting."
+        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting.",
     )
     if use_oos:
         st.success("✓ Look-ahead bias removed")
