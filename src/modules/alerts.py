@@ -28,20 +28,20 @@ def evaluate_alerts(metrics: Dict[str, float], thresholds: Dict[str, Dict]) -> p
 
         triggered = (value > t_val) if t_type == ">" else (value < t_val)
         if triggered:
-            rows.append({
-                "Alert": name,
-                "Severity": severity,
-                "Value": value,
-                "Threshold": f"{t_type} {t_val}",
-            })
+            rows.append(
+                {
+                    "Alert": name,
+                    "Severity": severity,
+                    "Value": value,
+                    "Threshold": f"{t_type} {t_val}",
+                }
+            )
 
     return pd.DataFrame(rows)
 
 
 def detect_zscore_anomalies(
-    returns: pd.Series,
-    window: int = 60,
-    z_threshold: float = 3.0
+    returns: pd.Series, window: int = 60, z_threshold: float = 3.0
 ) -> pd.DataFrame:
     """
     Detect anomalies in returns using rolling z-scores.
@@ -54,9 +54,6 @@ def detect_zscore_anomalies(
     zscore = (returns - rolling_mean) / rolling_std
 
     flagged = zscore.abs() >= z_threshold
-    out = pd.DataFrame({
-        "Return": returns,
-        "ZScore": zscore
-    })
+    out = pd.DataFrame({"Return": returns, "ZScore": zscore})
     out = out[flagged].dropna()
     return out
