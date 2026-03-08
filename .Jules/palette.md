@@ -1,0 +1,3 @@
+## 2026-03-08 - Contextual Tooltips for Financial Inputs
+**Learning:** Users often lack context on acceptable formats or magnitudes for statistical parameters like quantiles or basis points when interacting with Streamlit widgets.
+**Action:** Add `help` tooltips to all critical statistical and financial inputs to provide concrete examples (e.g., '10 bps = 0.10%') directly within the widget parameters rather than using separate text blocks.
