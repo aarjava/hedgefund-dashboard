@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
-def fetch_stock_data(ticker: str, period: str = "10y", interval: str = "1d") -> pd.DataFrame:
+def fetch_stock_data(
+    ticker: str,
+    period: str = "10y",
+    interval: str = "1d"
+) -> pd.DataFrame:
     """
     Fetch historical OHLCV data from Yahoo Finance with caching.
 
@@ -61,7 +65,11 @@ def fetch_stock_data(ticker: str, period: str = "10y", interval: str = "1d") -> 
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS)
-def fetch_multi_asset_data(tickers: tuple, period: str = "10y", interval: str = "1d") -> dict:
+def fetch_multi_asset_data(
+    tickers: tuple,
+    period: str = "10y",
+    interval: str = "1d"
+) -> dict:
     """
     Fetch historical data for multiple tickers.
 
@@ -92,14 +100,14 @@ def align_close_prices(data: dict) -> pd.DataFrame:
     """
     frames = []
     for t, df in data.items():
-        if df is None or df.empty or "Close" not in df.columns:
+        if df is None or df.empty or 'Close' not in df.columns:
             continue
-        s = df["Close"].rename(t)
+        s = df['Close'].rename(t)
         frames.append(s)
     if not frames:
         return pd.DataFrame()
-    prices = pd.concat(frames, axis=1, join="inner").sort_index()
-    return prices.dropna(how="any")
+    prices = pd.concat(frames, axis=1, join='inner').sort_index()
+    return prices.dropna(how='any')
 
 
 def align_volume(data: dict) -> pd.DataFrame:
@@ -108,15 +116,14 @@ def align_volume(data: dict) -> pd.DataFrame:
     """
     frames = []
     for t, df in data.items():
-        if df is None or df.empty or "Volume" not in df.columns:
+        if df is None or df.empty or 'Volume' not in df.columns:
             continue
-        s = df["Volume"].rename(t)
+        s = df['Volume'].rename(t)
         frames.append(s)
     if not frames:
         return pd.DataFrame()
-    vol = pd.concat(frames, axis=1, join="inner").sort_index()
-    return vol.dropna(how="any")
-
+    vol = pd.concat(frames, axis=1, join='inner').sort_index()
+    return vol.dropna(how='any')
 
 def validate_ticker(ticker: str) -> bool:
     """
@@ -132,7 +139,7 @@ def validate_ticker(ticker: str) -> bool:
         stock = yf.Ticker(ticker)
         info = stock.info
         # Check if we got valid info back
-        return info.get("regularMarketPrice") is not None
+        return info.get('regularMarketPrice') is not None
     except Exception as e:
         logger.debug(f"Ticker validation failed for {ticker}: {e}")
         return False

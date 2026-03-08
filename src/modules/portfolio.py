@@ -88,10 +88,8 @@ def build_portfolio(price_df: pd.DataFrame, weights: pd.Series) -> pd.DataFrame:
 
     port_rets = compute_portfolio_returns(price_df, weights)
     equity = (1 + port_rets).cumprod()
-    out = pd.DataFrame(
-        {
-            "Portfolio_Return": port_rets,
-            "Portfolio_Equity": equity,
-        }
-    )
+    out = pd.DataFrame({
+        "Portfolio_Return": port_rets,
+        "Portfolio_Equity": equity,
+    })
     return out
