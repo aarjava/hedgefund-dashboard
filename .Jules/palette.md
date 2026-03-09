@@ -1,0 +1,3 @@
+## 2024-05-18 - Tooltips for Statistical/Financial Parameters
+**Learning:** Users often struggle with abstract statistical or financial parameter inputs (like basis points or quantiles) if there is no concrete example or contextual explanation provided in the UI. Adding separate helper text components clutters the UI and distracts from the primary data visualization.
+**Action:** Use native widget tooltips (e.g., `help="10 bps = 0.10%"`) for all advanced statistical or financial inputs. This provides accessible, on-demand context without increasing visual noise or compromising the dashboard's layout density.
