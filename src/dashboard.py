@@ -190,12 +190,20 @@ with st.sidebar:
 
     if mode == "Single-Asset":
         st.subheader("5. Backtest Settings")
-        bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
+        bt_cost = (
+            st.number_input(
+                "Transaction Cost (bps)",
+                value=DEFAULT_COST_BPS,
+                step=1,
+                help="e.g., 10 bps = 0.10% per trade"
+            )
+            / 10000
+        )
         allow_short = st.checkbox("Allow Short Selling?", value=False)
     else:
         st.subheader("5. Alert Thresholds")
-        dd_alert = st.slider("Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05)
-        vol_alert = st.slider("Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05)
+        dd_alert = st.slider("Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05, help="e.g., -0.2 = -20% max DD")
+        vol_alert = st.slider("Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05, help="e.g., 0.35 = 35% annualized volatility")
         beta_alert = st.slider("Beta Alert", 0.5, 2.0, 1.3, 0.1)
         dttl_alert = st.slider("Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0)
 
