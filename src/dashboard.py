@@ -168,9 +168,15 @@ with st.sidebar:
             help="Lookback months for Momentum signal."
         )
     else:
-        factor_window = st.slider("Factor Beta Window (days)", 20, 252, 63, 7)
-        vol_window = st.slider("Regime Vol Window (days)", 10, 60, 21, 5)
-        adv_pct = st.slider("ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01)
+        factor_window = st.slider(
+            "Factor Beta Window (days)", 20, 252, 63, 7, help="e.g., 63 days ≈ 3 months"
+        )
+        vol_window = st.slider(
+            "Regime Vol Window (days)", 10, 60, 21, 5, help="e.g., 21 days ≈ 1 month"
+        )
+        adv_pct = st.slider(
+            "ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01, help="e.g., 0.10 = 10% of Average Daily Volume"
+        )
 
     st.markdown("---")
     st.subheader("4. Research Rigor")
@@ -185,19 +191,29 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
 
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05
+        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05, help="e.g., 0.80 = top 20% of trading days"
     )
 
     if mode == "Single-Asset":
         st.subheader("5. Backtest Settings")
-        bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1) / 10000
+        bt_cost = st.number_input(
+            "Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1, help="e.g., 10 bps = 0.10%"
+        ) / 10000
         allow_short = st.checkbox("Allow Short Selling?", value=False)
     else:
         st.subheader("5. Alert Thresholds")
-        dd_alert = st.slider("Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05)
-        vol_alert = st.slider("Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05)
-        beta_alert = st.slider("Beta Alert", 0.5, 2.0, 1.3, 0.1)
-        dttl_alert = st.slider("Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0)
+        dd_alert = st.slider(
+            "Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05, help="e.g., -0.20 = -20% drawdown limit"
+        )
+        vol_alert = st.slider(
+            "Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05, help="e.g., 0.35 = 35% annualized volatility"
+        )
+        beta_alert = st.slider(
+            "Beta Alert", 0.5, 2.0, 1.3, 0.1, help="e.g., 1.0 = matches benchmark volatility"
+        )
+        dttl_alert = st.slider(
+            "Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0, help="e.g., 5.0 = 5 days to liquidate position"
+        )
 
 
 # --- Portfolio Mode ---
@@ -522,7 +538,9 @@ if mode == "Portfolio":
             macro_items = list(MACRO_PROXIES.keys())
             for i, name in enumerate(macro_items):
                 col = cols[i % 3]
-                shocks[name] = col.slider(f"{name} Shock (%)", -10.0, 10.0, 0.0, 0.5) / 100
+                shocks[name] = col.slider(
+                    f"{name} Shock (%)", -10.0, 10.0, 0.0, 0.5, help="e.g., 1.0 = 1% shock"
+                ) / 100
 
             # Map shocks to proxy names in betas
             betas_series = latest_macro.copy()
