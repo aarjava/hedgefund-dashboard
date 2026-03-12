@@ -160,53 +160,24 @@ with st.sidebar:
     st.subheader("3. Signal Parameters")
     if mode == "Single-Asset":
         sma_window = st.slider(
-            "Trend SMA Window",
-            10,
-            200,
-            DEFAULT_SMA_WINDOW,
-            10,
-            help="Lookback days for Simple Moving Average trend signal.",
+            "Trend SMA Window", 10, 200, DEFAULT_SMA_WINDOW, 10,
+            help="Lookback days for Simple Moving Average trend signal."
         )
         mom_window = st.slider(
-            "Momentum Lookback (Months)",
-            1,
-            24,
-            DEFAULT_MOMENTUM_WINDOW,
-            1,
-            help="Lookback months for Momentum signal.",
+            "Momentum Lookback (Months)", 1, 24, DEFAULT_MOMENTUM_WINDOW, 1,
+            help="Lookback months for Momentum signal."
         )
     else:
-        factor_window = st.slider(
-            "Factor Beta Window (days)",
-            20,
-            252,
-            63,
-            7,
-            help="Lookback period for calculating rolling factor betas. Example: 63 days = 3 months.",
-        )
-        vol_window = st.slider(
-            "Regime Vol Window (days)",
-            10,
-            60,
-            21,
-            5,
-            help="Lookback period for calculating realized volatility regimes. Example: 21 days = 1 month.",
-        )
-        adv_pct = st.slider(
-            "ADV Participation %",
-            0.01,
-            0.30,
-            float(DEFAULT_ADV_PCT),
-            0.01,
-            help="Maximum participation rate of Average Daily Volume. Example: 0.10 = 10% of ADV.",
-        )
+        factor_window = st.slider("Factor Beta Window (days)", 20, 252, 63, 7, help="Lookback period for calculating rolling factor betas. Example: 63 days = 3 months.")
+        vol_window = st.slider("Regime Vol Window (days)", 10, 60, 21, 5, help="Lookback period for calculating realized volatility regimes. Example: 21 days = 1 month.")
+        adv_pct = st.slider("ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01, help="Maximum participation rate of Average Daily Volume. Example: 0.10 = 10% of ADV.")
 
     st.markdown("---")
     st.subheader("4. Research Rigor")
     use_oos = st.toggle(
         "Out-of-Sample Mode",
         value=False,
-        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting.",
+        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting."
     )
     if use_oos:
         st.success("✓ Look-ahead bias removed")
@@ -214,60 +185,19 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
 
     vol_q_high = st.slider(
-        "High Volatility Quantile",
-        0.5,
-        0.95,
-        DEFAULT_VOL_QUANTILE_HIGH,
-        0.05,
-        help="Threshold for classifying high volatility days. Example: 0.75 means the top 25% most volatile days.",
+        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05, help="Threshold for classifying high volatility days. Example: 0.75 means the top 25% most volatile days."
     )
 
     if mode == "Single-Asset":
         st.subheader("5. Backtest Settings")
-        bt_cost = (
-            st.number_input(
-                "Transaction Cost (bps)",
-                value=DEFAULT_COST_BPS,
-                step=1,
-                help="Trading friction applied per transaction. Example: 10 bps = 0.10%.",
-            )
-            / 10000
-        )
+        bt_cost = st.number_input("Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1, help="Trading friction applied per transaction. Example: 10 bps = 0.10%.") / 10000
         allow_short = st.checkbox("Allow Short Selling?", value=False)
     else:
         st.subheader("5. Alert Thresholds")
-        dd_alert = st.slider(
-            "Max Drawdown Alert",
-            -0.6,
-            -0.05,
-            -0.2,
-            0.05,
-            help="Triggers an alert if portfolio drawdown exceeds this level. Example: -0.20 = 20% decline.",
-        )
-        vol_alert = st.slider(
-            "Volatility Alert (ann.)",
-            0.1,
-            1.0,
-            0.35,
-            0.05,
-            help="Triggers an alert if annualized volatility exceeds this level. Example: 0.35 = 35% vol.",
-        )
-        beta_alert = st.slider(
-            "Beta Alert",
-            0.5,
-            2.0,
-            1.3,
-            0.1,
-            help="Triggers an alert if portfolio beta exceeds this level. Example: 1.30 = 30% more volatile than benchmark.",
-        )
-        dttl_alert = st.slider(
-            "Days-to-Liquidate Alert",
-            1.0,
-            20.0,
-            5.0,
-            1.0,
-            help="Triggers an alert if days required to liquidate the portfolio exceeds this level. Example: 5.0 = 5 trading days.",
-        )
+        dd_alert = st.slider("Max Drawdown Alert", -0.6, -0.05, -0.2, 0.05, help="Triggers an alert if portfolio drawdown exceeds this level. Example: -0.20 = 20% decline.")
+        vol_alert = st.slider("Volatility Alert (ann.)", 0.1, 1.0, 0.35, 0.05, help="Triggers an alert if annualized volatility exceeds this level. Example: 0.35 = 35% vol.")
+        beta_alert = st.slider("Beta Alert", 0.5, 2.0, 1.3, 0.1, help="Triggers an alert if portfolio beta exceeds this level. Example: 1.30 = 30% more volatile than benchmark.")
+        dttl_alert = st.slider("Days-to-Liquidate Alert", 1.0, 20.0, 5.0, 1.0, help="Triggers an alert if days required to liquidate the portfolio exceeds this level. Example: 5.0 = 5 trading days.")
 
 
 # --- Portfolio Mode ---
