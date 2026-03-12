@@ -160,12 +160,20 @@ with st.sidebar:
     st.subheader("3. Signal Parameters")
     if mode == "Single-Asset":
         sma_window = st.slider(
-            "Trend SMA Window", 10, 200, DEFAULT_SMA_WINDOW, 10,
-            help="Lookback days for Simple Moving Average trend signal."
+            "Trend SMA Window",
+            10,
+            200,
+            DEFAULT_SMA_WINDOW,
+            10,
+            help="Lookback days for Simple Moving Average trend signal.",
         )
         mom_window = st.slider(
-            "Momentum Lookback (Months)", 1, 24, DEFAULT_MOMENTUM_WINDOW, 1,
-            help="Lookback months for Momentum signal."
+            "Momentum Lookback (Months)",
+            1,
+            24,
+            DEFAULT_MOMENTUM_WINDOW,
+            1,
+            help="Lookback months for Momentum signal.",
         )
     else:
         factor_window = st.slider(
@@ -198,7 +206,7 @@ with st.sidebar:
     use_oos = st.toggle(
         "Out-of-Sample Mode",
         value=False,
-        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting."
+        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting.",
     )
     if use_oos:
         st.success("✓ Look-ahead bias removed")
