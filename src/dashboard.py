@@ -142,7 +142,7 @@ with st.sidebar:
             "Portfolio Value (USD)",
             value=float(DEFAULT_PORTFOLIO_VALUE),
             step=100000.0,
-            help="Total capital allocated to the portfolio (e.g., 1,000,000 USD)."
+            help="Total capital allocated to the portfolio (e.g., 1,000,000 USD).",
         )
         benchmark_ticker = st.text_input("Benchmark Ticker", value=DEFAULT_BENCHMARK).upper()
 
@@ -161,25 +161,45 @@ with st.sidebar:
     st.subheader("3. Signal Parameters")
     if mode == "Single-Asset":
         sma_window = st.slider(
-            "Trend SMA Window", 10, 200, DEFAULT_SMA_WINDOW, 10,
-            help="Lookback days for Simple Moving Average trend signal."
+            "Trend SMA Window",
+            10,
+            200,
+            DEFAULT_SMA_WINDOW,
+            10,
+            help="Lookback days for Simple Moving Average trend signal.",
         )
         mom_window = st.slider(
-            "Momentum Lookback (Months)", 1, 24, DEFAULT_MOMENTUM_WINDOW, 1,
-            help="Lookback months for Momentum signal."
+            "Momentum Lookback (Months)",
+            1,
+            24,
+            DEFAULT_MOMENTUM_WINDOW,
+            1,
+            help="Lookback months for Momentum signal.",
         )
     else:
         factor_window = st.slider(
-            "Factor Beta Window (days)", 20, 252, 63, 7,
-            help="Rolling window for calculating factor betas (e.g., 63 days ≈ 3 months)."
+            "Factor Beta Window (days)",
+            20,
+            252,
+            63,
+            7,
+            help="Rolling window for calculating factor betas (e.g., 63 days ≈ 3 months).",
         )
         vol_window = st.slider(
-            "Regime Vol Window (days)", 10, 60, 21, 5,
-            help="Rolling window for calculating annualized volatility (e.g., 21 days ≈ 1 month)."
+            "Regime Vol Window (days)",
+            10,
+            60,
+            21,
+            5,
+            help="Rolling window for calculating annualized volatility (e.g., 21 days ≈ 1 month).",
         )
         adv_pct = st.slider(
-            "ADV Participation %", 0.01, 0.30, float(DEFAULT_ADV_PCT), 0.01,
-            help="Maximum percentage of Average Daily Volume to trade (e.g., 0.10 = 10% of ADV)."
+            "ADV Participation %",
+            0.01,
+            0.30,
+            float(DEFAULT_ADV_PCT),
+            0.01,
+            help="Maximum percentage of Average Daily Volume to trade (e.g., 0.10 = 10% of ADV).",
         )
 
     st.markdown("---")
@@ -187,7 +207,7 @@ with st.sidebar:
     use_oos = st.toggle(
         "Out-of-Sample Mode",
         value=False,
-        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting."
+        help="Uses expanding-window quantiles for regime classification to avoid look-ahead bias. Enable for rigorous backtesting.",
     )
     if use_oos:
         st.success("✓ Look-ahead bias removed")
@@ -195,16 +215,25 @@ with st.sidebar:
         st.info("Using full-sample quantiles (exploratory mode)")
 
     vol_q_high = st.slider(
-        "High Volatility Quantile", 0.5, 0.95, DEFAULT_VOL_QUANTILE_HIGH, 0.05,
-        help="Threshold for 'High' volatility regime (e.g., 0.75 means top 25% of historically most volatile days)."
+        "High Volatility Quantile",
+        0.5,
+        0.95,
+        DEFAULT_VOL_QUANTILE_HIGH,
+        0.05,
+        help="Threshold for 'High' volatility regime (e.g., 0.75 means top 25% of historically most volatile days).",
     )
 
     if mode == "Single-Asset":
         st.subheader("5. Backtest Settings")
-        bt_cost = st.number_input(
-            "Transaction Cost (bps)", value=DEFAULT_COST_BPS, step=1,
-            help="Transaction friction per trade (e.g., 10 bps = 0.10%)."
-        ) / 10000
+        bt_cost = (
+            st.number_input(
+                "Transaction Cost (bps)",
+                value=DEFAULT_COST_BPS,
+                step=1,
+                help="Transaction friction per trade (e.g., 10 bps = 0.10%).",
+            )
+            / 10000
+        )
         allow_short = st.checkbox("Allow Short Selling?", value=False)
     else:
         st.subheader("5. Alert Thresholds")
