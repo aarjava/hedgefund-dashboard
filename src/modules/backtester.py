@@ -182,7 +182,6 @@ def calculate_perf_metrics(
         logger.warning(f"Could not calculate period: {e}")
         years = 1
 
-
     cagr = (equity_curve.iloc[-1]) ** (1 / years) - 1
 
     # Volatility
@@ -460,7 +459,6 @@ def walk_forward_backtest(
         # Filter data
 
         test_mask = df["YearMonth"].isin(test_months_range)
-
 
         test_df = df[test_mask].copy()
 
